@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>WK 2026 Poultje</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:system-ui,sans-serif;background:#fff;color:#1a1a1a}
+    input,button,select{font-family:inherit}
+    button:focus,input:focus{outline:none}
+    ::-webkit-scrollbar-thumb{background:#ddd;border-radius:4px}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+
+/* ══════════════════════════════════════════════════
+   ⚙️  CONFIGURATIE — VUL DIT IN VOOR JE UPLOAD
+   ══════════════════════════════════════════════════ */
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyC2JgS3ePOZ6cavIqhLKApvVz88Y_EAjxk",
+  authDomain:        "wk2026-poultje.firebaseapp.com",
+  databaseURL:       "https://wk2026-poultje-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "wk2026-poultje",
+  storageBucket:     "wk2026-poultje.firebasestorage.app",
+  messagingSenderId: "597279423009",
+  appId:             "1:597279423009:web:96e3688b79ccb4665e8160"
+};
+const FD_KEY = "ef137c6caa954dcb8f757cbf6593dfe7"; // football-data.org gratis token
+/* ══════════════════════════════════════════════════ */
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.database();
+const REF = '/wk2026';
+
+/* ── constants ── */
+const GROUPS = {
+  A:["mex","rsa","kor","cze"], B:["can","bih","qat","sui"],
+  C:["bra","mar","hai","sco"], D:["usa","par","aus","tur"],
+  E:["ger","cur","civ","ecu"], F:["ned","jpn","swe","tun"],
+  G:["bel","egy","irn","nzl"], H:["esp","cpv","ksa","uru"],
+  I:["fra","sen","irq","nor"], J:["arg","dza","aut","jor"],
+  K:["por","cod","uzb","col"], L:["eng","cro","gha","pan"],
+};
+const TEAMS = [
+  {id:"mex",name:"Mexico",flag:"🇲🇽"},{id:"rsa",name:"Z-Afrika",flag:"🇿🇦"},
+  {id:"kor",name:"Z-Korea",flag:"🇰🇷"},{id:"cze",name:"Tsjechië",flag:"🇨🇿"},
+  {id:"can",name:"Canada",flag:"🇨🇦"},{id:"bih",name:"Bosnië-Herz.",flag:"🇧🇦"},
+  {id:"qat",name:"Qatar",flag:"🇶🇦"},{id:"sui",name:"Zwitserland",flag:"🇨🇭"},
+  {id:"bra",name:"Brazilië",flag:"🇧🇷"},{id:"mar",name:"Marokko",flag:"🇲🇦"},
+  {id:"hai",name:"Haïti",flag:"🇭🇹"},{id:"sco",name:"Schotland",flag:"🏴󠁧󠁢󠁳󠁣󠁴󠁿"},
+  {id:"usa",name:"VS",flag:"🇺🇸"},{id:"par",name:"Paraguay",flag:"🇵🇾"},
+  {id:"aus",name:"Australië",flag:"🇦🇺"},{id:"tur",name:"Turkije",flag:"🇹🇷"},
+  {id:"ger",name:"Duitsland",flag:"🇩🇪"},{id:"cur",name:"Curaçao",flag:"🇨🇼"},
+  {id:"civ",name:"Ivoorkust",flag:"🇨🇮"},{id:"ecu",name:"Ecuador",flag:"🇪🇨"},
+  {id:"ned",name:"Nederland",flag:"🇳🇱"},{id:"jpn",name:"Japan",flag:"🇯🇵"},
+  {id:"swe",name:"Zweden",flag:"🇸🇪"},{id:"tun",name:"Tunesië",flag:"🇹🇳"},
+  {id:"bel",name:"België",flag:"🇧🇪"},{id:"egy",name:"Egypte",flag:"🇪🇬"},
+  {id:"irn",name:"Iran",flag:"🇮🇷"},{id:"nzl",name:"Nieuw-Zeeland",flag:"🇳🇿"},
+  {id:"esp",name:"Spanje",flag:"🇪🇸"},{id:"cpv",name:"Kaapverdië",flag:"🇨🇻"},
+  {id:"ksa",name:"Saoedi-Arabië",flag:"🇸🇦"},{id:"uru",name:"Uruguay",flag:"🇺🇾"},
+  {id:"fra",name:"Frankrijk",flag:"🇫🇷"},{id:"sen",name:"Senegal",flag:"🇸🇳"},
+  {id:"irq",name:"Irak",flag:"🇮🇶"},{id:"nor",name:"Noorwegen",flag:"🇳🇴"},
+  {id:"arg",name:"Argentinië",flag:"🇦🇷"},{id:"dza",name:"Algerije",flag:"🇩🇿"},
+  {id:"aut",name:"Oostenrijk",flag:"🇦🇹"},{id:"jor",name:"Jordanië",flag:"🇯🇴"},
+  {id:"por",name:"Portugal",flag:"🇵🇹"},{id:"cod",name:"DR Congo",flag:"🇨🇩"},
+  {id:"uzb",name:"Oezbekistan",flag:"🇺🇿"},{id:"col",name:"Colombia",flag:"🇨🇴"},
+  {id:"eng",name:"Engeland",flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿"},{id:"cro",name:"Kroatië",flag:"🇭🇷"},
+  {id:"gha",name:"Ghana",flag:"🇬🇭"},{id:"pan",name:"Panama",flag:"🇵🇦"},
+];
+const ODDS_RANK = ["esp","fra","eng","arg","bra","por","ger","nor","ned","bel","col","usa","jpn","mar","uru","mex","cro","sui","ecu","sen","kor","aut","can","par","sco","civ","egy","dza","rsa","aus","gha","irn","bih","cze","tur","ksa","pan","irq","qat","hai","nzl","jor","cod","swe","tun","cur","cpv","uzb"];
+const BOT3 = ODDS_RANK.slice(45);
+
+/* Officieel WK 2026 knock-outschema (R32 loting) */
+const BRACKET_R32 = [
+  ["1E","3ABCDF"], ["1I","3CDFGH"],
+  ["2A","2B"],     ["1F","2C"],
+  ["2K","2L"],     ["1H","2J"],
+  ["1D","3BEFIJ"], ["1G","3AEHIJ"],
+  ["1C","2F"],     ["2E","2I"],
+  ["1A","3CEFHI"], ["1L","3EHIJK"],
+  ["1J","2H"],     ["2D","2G"],
+  ["1B","3EFGIJ"], ["1K","3DEIJL"],
+];
+
+/* Officieel speelschema knockouts — tijden in CEST (* = volgende dag) */
+const KO_SCHEDULE = {
+  r32:[
+    {date:"28 jun",time:"21:00",venue:"Los Angeles"},
+    {date:"30 jun",time:"03:00*",venue:"Monterrey"},
+    {date:"29 jun",time:"22:00",venue:"Boston"},
+    {date:"30 jun",time:"23:00",venue:"New York/NJ"},
+    {date:"01 jul",time:"03:00*",venue:"Mexico City"},
+    {date:"30 jun",time:"19:00",venue:"Dallas"},
+    {date:"01 jul",time:"18:00",venue:"Atlanta"},
+    {date:"02 jul",time:"02:00*",venue:"San Francisco"},
+    {date:"29 jun",time:"19:00",venue:"Houston"},
+    {date:"01 jul",time:"22:00",venue:"Seattle"},
+    {date:"02 jul",time:"21:00",venue:"Los Angeles"},
+    {date:"03 jul",time:"03:00*",venue:"Vancouver"},
+    {date:"03 jul",time:"01:00*",venue:"Toronto"},
+    {date:"03 jul",time:"20:00",venue:"Dallas"},
+    {date:"04 jul",time:"00:00*",venue:"Miami"},
+    {date:"04 jul",time:"03:30*",venue:"Kansas City"},
+  ],
+  r16:[
+    {date:"5 jul",time:"22:00",venue:"New York/NJ"},
+    {date:"4 jul",time:"23:00",venue:"Philadelphia"},
+    {date:"6 jul",time:"02:00*",venue:"Mexico City"},
+    {date:"6 jul",time:"18:00",venue:"Atlanta"},
+    {date:"4 jul",time:"19:00",venue:"Houston"},
+    {date:"7 jul",time:"22:00",venue:"Vancouver"},
+    {date:"6 jul",time:"21:00",venue:"Dallas"},
+    {date:"7 jul",time:"02:00*",venue:"Seattle"},
+  ],
+  qf:[
+    {date:"9 jul",time:"22:00",venue:"Boston"},
+    {date:"10 jul",time:"21:00",venue:"Los Angeles"},
+    {date:"11 jul",time:"23:00",venue:"Miami"},
+    {date:"12 jul",time:"03:00*",venue:"Kansas City"},
+  ],
+  sf:[
+    {date:"14 jul",time:"21:00",venue:"AT&T Stadium, Dallas"},
+    {date:"15 jul",time:"21:00",venue:"Mercedes-Benz, Atlanta"},
+  ],
+  final:[
+    {date:"19 jul",time:"21:00",venue:"MetLife Stadium, New York/NJ"},
+  ],
+};
+const PC = ["#378ADD","#1D9E75","#D85A30"];
+const PL = ["#E6F1FB","#E1F5EE","#FAECE7"];
+const PD = ["#0C447C","#085041","#4A1B0C"];
+const ROUNDS = [
+  {key:"r32",label:"Door groepsfase",short:"Groepen",max:32,source:null},
+  {key:"r16",label:"Ronde van 32 door",short:"R32",max:16,source:"r32"},
+  {key:"qf",label:"Achtste finale door",short:"R16",max:8,source:"r16"},
+  {key:"sf",label:"Kwartfinale door",short:"QF",max:4,source:"qf"},
+  {key:"final",label:"Halve finale door",short:"SF",max:2,source:"sf"},
+  {key:"champion",label:"Wereldkampioen",short:"🏆",max:1,source:"final"},
+];
+const NAT_MAP = {"France":"fra","Spain":"esp","England":"eng","Argentina":"arg","Brazil":"bra","Portugal":"por","Germany":"ger","Netherlands":"ned","Morocco":"mar","Belgium":"bel","Japan":"jpn","Norway":"nor","Colombia":"col","Uruguay":"uru","Mexico":"mex","Croatia":"cro","Switzerland":"sui","Ecuador":"ecu","Senegal":"sen","South Korea":"kor","Korea Republic":"kor","Austria":"aut","Canada":"can","Paraguay":"par","Scotland":"sco","Ivory Coast":"civ","Côte d'Ivoire":"civ","Egypt":"egy","Australia":"aus","Algeria":"dza","South Africa":"rsa","Ghana":"gha","Iran":"irn","Bosnia and Herzegovina":"bih","Czechia":"cze","Czech Republic":"cze","Turkey":"tur","Türkiye":"tur","Qatar":"qat","Saudi Arabia":"ksa","Panama":"pan","Iraq":"irq","Haiti":"hai","Curaçao":"cur","Congo DR":"cod","DR Congo":"cod","Cape Verde":"cpv","Sweden":"swe","Tunisia":"tun","New Zealand":"nzl","Jordan":"jor","Uzbekistan":"uzb","United States":"usa","USA":"usa","IR Iran":"irn","Korea Republic":"kor","Côte d’Ivoire":"civ","Cabo Verde":"cpv","Czechia":"cze"};
+const PLAYER_META = [{hl:{start:0,len:3}},{hl:{start:0,len:4}},{hl:{start:2,len:4}}];
+
+const DEF_STATE = {
+  names:["TIMas Rosický","OLAVksandr Zinchenko","roBARTo Carlos"],
+  picks:{}, vkPicks:[], draftPhase:"order", phaseStep:0, draftOrder:null,
+  lotGroups:[], lotStep:0, lotRevealed:false, orderRevealed:false,
+  potPredStep:0,
+  sc:{r32:3,r16:6,qf:10,sf:15,final:20,champion:30,worst:-20,topScorer:6,mostCards:-6},
+  res:{r32:[],r16:[],qf:[],sf:[],final:[],champion:null,topScorer:null,mostCards:null},
+  teamStats:{}, playerPreds:["","",""],
+  potPlayer:"", photoVictim:null, draftEnabled:false,
+  live:{topScorerName:"",topScorerTeamId:null,topScorerGoals:0,mostCardsTeamId:null,mostCardsCount:0,lastUpdated:null,matchList:[],groupStandings:{}}
+};
+
+const PASSWORDS = {"0":{"0607":true},"1":{"1313":true},"2":{"6969":true}};
+
+function App(){
+  const [phase,setPhase] = React.useState("draft");
+  const [showSc,setShowSc] = React.useState(false);
+  const [showTm,setShowTm] = React.useState(false);
+  const [showSr,setShowSr] = React.useState(false);
+  const [showDs,setShowDs] = React.useState(false);
+  const [showStats,setShowStats] = React.useState(false);
+  const [geavPass,setGeavPass] = React.useState(false);
+  const [apiStatus,setApiStatus] = React.useState(null);
+  const [apiLoading,setApiLoading] = React.useState(false);
+  const [freeSearch,setFreeSearch] = React.useState("");
+  const [freeFilter,setFreeFilter] = React.useState("Alle");
+  const [s,setS] = React.useState(DEF_STATE);
+
+  /* Login — lazy initializer to avoid useMemo before useState */
+  const [currentPlayer,setCurrentPlayer] = React.useState(()=>{
+    try{const v=parseInt(localStorage.getItem('wk26_player'));return(v>=0&&v<=2)?v:null;}catch{return null;}
+  });
+  const [loginStep,setLoginStep] = React.useState(0);
+  const [loginSelected,setLoginSelected] = React.useState(null);
+  const [loginPw,setLoginPw] = React.useState("");
+  const [loginErr,setLoginErr] = React.useState(false);
+
+  const doLogin=(player,pw)=>{
+    if(PASSWORDS[String(player)]?.[pw]){
+      setCurrentPlayer(player);
+      try{localStorage.setItem('wk26_player',String(player));}catch{}
+      setLoginErr(false);
+    } else {
+      setLoginErr(true);
+      setLoginPw("");
+    }
+  };
+
+  const doLogout=()=>{
+    setCurrentPlayer(null);setLoginStep(0);setLoginSelected(null);setLoginPw("");setLoginErr(false);
+    try{localStorage.removeItem('wk26_player');}catch{}
+  };
+
+  const [fbReady,setFbReady] = React.useState(false);
+  const [activeRnd,setActiveRnd]=React.useState("groepen");
+  const [draftStarted,setDraftStarted]=React.useState(false);
+
+  /* auto-switch tab: knockouts zodra R32 gespeeld is */
+  React.useEffect(()=>{
+    if(!fbReady)return;
+    const res=s.res||{};
+    if((res.r16||[]).length>0)setActiveRnd("knockouts");
+    else setActiveRnd("groepen");
+  },[fbReady]);
+  const [localPred,setLocalPred]=React.useState("");
+  const [playerList,setPlayerList]=React.useState([]);
+  const [playerListLoading,setPlayerListLoading]=React.useState(false);
+  const [potSearch,setPotSearch]=React.useState("");
+  const [showSugg,setShowSugg]=React.useState(false);
+
+
+  /* Static top players per WK 2026 team — best players regardless of position */
+  const fetchSquads=React.useCallback(()=>{
+    if(playerList.length>0)return;
+    const raw=[
+      ["esp","Pedri","Lamine Yamal","Álvaro Morata","Rodri","Aymeric Laporte","Fabián Ruiz","Dani Olmo","Ferran Torres","Dani Carvajal","Unai Simón"],
+      ["fra","Kylian Mbappé","Antoine Griezmann","Eduardo Camavinga","Aurélien Tchouaméni","Theo Hernández","Mike Maignan","Ousmane Dembélé","Adrien Rabiot","Dayot Upamecano","Marcus Thuram"],
+      ["eng","Harry Kane","Jude Bellingham","Bukayo Saka","Trent Alexander-Arnold","Declan Rice","Phil Foden","Marcus Rashford","Jordan Henderson","John Stones","Jordan Pickford"],
+      ["arg","Lionel Messi","Rodrigo De Paul","Mac Allister","Lautaro Martínez","Nahuel Molina","Cristian Romero","Nicolás Tagliafico","Ángel Di María","Julián Álvarez","Emiliano Martínez"],
+      ["bra","Vinícius Jr.","Rodrygo","Raphinha","Endrick","Casemiro","Bruno Guimarães","Éder Militão","Alisson","Fred","Richarlison"],
+      ["por","Cristiano Ronaldo","Bruno Fernandes","João Cancelo","Bernardo Silva","Rúben Dias","Diogo Dalot","Rúben Neves","João Félix","Rafael Leão","Diogo Costa"],
+      ["ger","Florian Wirtz","Kai Havertz","Jamal Musiala","Leroy Sané","Serge Gnabry","Joshua Kimmich","Antonio Rüdiger","Manuel Neuer","Ilkay Gündogan","Thomas Müller"],
+      ["nor","Erling Haaland","Martin Ødegaard","Alexander Sørloth","Sander Berge","Mohamed Elyounoussi","Kristoffer Ajer","Morten Thorsby","Patrick Berg","Leo Østigård","Fredrik Aursnes"],
+      ["ned","Virgil van Dijk","Cody Gakpo","Frenkie de Jong","Matthijs de Ligt","Denzel Dumfries","Steven Bergwijn","Jeremie Frimpong","Jurriën Timber","Wout Weghorst","Memphis Depay"],
+      ["bel","Kevin De Bruyne","Romelu Lukaku","Leandro Trossard","Jan Vertonghen","Thibaut Courtois","Yannick Carrasco","Jeremy Doku","Arthur Theate","Axel Witsel","Dodi Lukebakio"],
+      ["col","James Rodríguez","Juan Cuadrado","Richard Ríos","Jhon Jáder Durán","Daniel Muñoz","Davinson Sánchez","Yerry Mina","Lerma","Rafael Santos Borré","Falcao"],
+      ["usa","Christian Pulisic","Tyler Adams","Weston McKennie","Timothy Weah","Giovanni Reyna","Matt Turner","Sergino Dest","Yunus Musah","Ricardo Pepi","Brenden Aaronson"],
+      ["jpn","Kaoru Mitoma","Ritsu Doan","Takefusa Kubo","Wataru Endo","Daichi Kamada","Yukinari Sugawara","Takumi Minamino","Koji Miyoshi","Hidemasa Morita","Daizen Maeda"],
+      ["mar","Youssef En-Nesyri","Hakim Ziyech","Achraf Hakimi","Azzedine Ounahi","Sofyan Amrabat","Nayef Aguerd","Abdelhamid Sabiri","Sofiane Boufal","Selim Amallah","Yahia Attiyat Allah"],
+      ["uru","Federico Valverde","Rodrigo Bentancur","Darwin Núñez","Ronald Araújo","Mathías Olivera","Facundo Pellistri","José María Giménez","De Arrascaeta","Maxi Gómez","Sergio Rochet"],
+      ["mex","Hirving Lozano","Raúl Jiménez","Edson Álvarez","Jesús Corona","Guillermo Ochoa","Santiago Giménez","Henry Martín","Andrés Guardado","Héctor Herrera","Jorge Sánchez"],
+      ["cro","Dominik Livaković","Dominik Kotarski","Ivo Pandur","Joško Gvardiol","Duje Ćaleta-Car","Josip Šutalo","Josip Stanišić","Marin Pongračić","Martin Erlić","Luka Vušković","Luka Modrić","Mateo Kovačić","Mario Pašalić","Nikola Vlašić","Luka Sučić","Martin Baturina","Kristijan Jakić","Petar Sučić","Nikola Moro","Toni Fruk","Ivan Perišić","Andrej Kramarić","Ante Budimir","Marco Pašalić","Petar Musa","Igor Matanović"],
+      ["sui","Granit Xhaka","Xherdan Shaqiri","Breel Embolo","Manuel Akanji","Yann Sommer","Ruben Vargas","Ricardo Rodríguez","Silvan Widmer","Cedric Zesiger","Noah Okafor"],
+      ["ecu","Moisés Caicedo","Ángel Valencia","Pervis Estupiñán","Jeremy Sarmiento","Kendry Páez","Piero Hincapié","Enner Valencia","Byron Castillo","Gonzalo Plata","Alan Minda"],
+      ["sen","Sadio Mané","Ismaïla Sarr","Cheikh Bamba Dieng","Édouard Mendy","Kalidou Koulibaly","Pathé Ciss","Idrissa Gueye","Nampalys Mendy","Krepin Diatta","Nicolas Jackson"],
+      ["kor","Kim Seung-gyu","Jo Hyeon-woo","Song Bum-keun","Kim Min-jae","Kim Moon-hwan","Cho Yu-min","Lee Tae-seok","Park Jin-seob","Kim Tae-hyeon","Lee Han-beom","Jens Castrop","Lee Ki-hyuk","Sel Young-woo","Lee Jae-sung","Hwang Hee-chan","Hwang In-beom","Lee Kang-in","Paik Seung-ho","Lee Dong-gyeong","Bae Jun-ho","Eom Ji-sung","Yang Hyun-jun","Kim Jun-gyu","Son Heung-min","Cho Gue-sung","Oh Hyeon-gyu"],
+      ["aut","Alexander Schlager","Patrick Pentz","Florian Wiegele","David Alaba","Kevin Danso","Marco Friedl","Stefan Posch","Philipp Lienhart","Alexander Prass","Phillipp Mwene","Michael Svoboda","David Affengruber","Marcel Sabitzer","Xaver Schlager","Nicolas Seiwald","Konrad Laimer","Christoph Baumgartner","Florian Grillitsch","Romano Schmid","Patrick Wimmer","Carney Chukwuemeka","Paul Wanner","Alessandro Schopf","Marko Arnautovic","Michael Gregoritsch","Sasa Kalajdzic"],
+      ["can","Alphonso Davies","Jonathan David","Cyle Larin","Tajon Buchanan","Liam Millar","Stephen Eustáquio","Richie Laryea","Alistair Johnston","Lucas Cavallini","Kamal Miller"],
+      ["par","Miguel Almirón","Antonio Sanabria","Gastón Giménez","Ángel Romero","Oscar Romero","Robert Morales","Mathías Villasanti","Junior Alonso","Sebastián Ferreira","Gabriel Ávalos"],
+      ["sco","Craig Gordon","Angus Gunn","Robby McCrorie","Andy Robertson","Kieran Tierney","Grant Hanley","Jack Hendry","Scott McKenna","John Souttar","Nathan Patterson","Anthony Ralston","Aaron Hickey","Dominic Hyam","Scott McTominay","John McGinn","Billy Gilmour","Kenny McLean","Lewis Ferguson","Ryan Christie","Findlay Curtis","Ben Doak","Lawrence Shankland","Che Adams","Lyndon Dykes","Ross Stewart","George Hirst"],
+      ["civ","Nicolas Pépé","Wilfried Zaha","Franck Kessié","Ibrahim Sangaré","Max-Alain Gradel","Jean-Philippe Krasso","Simon Adingra","Seko Fofana","Serge Aurier","Odilon Kossounou"],
+      ["egy","Mohamed Salah","Omar Marmoush","Mostafa Mohamed","Ahmed Hegazi","Mahmoud Trezeguet","Mohamed Elneny","Ahmed El-Shenawy","Hamdi Fathi","Zizo","Mohamed Abdelmonem"],
+      ["dza","Riyad Mahrez","Ismaël Bennacer","Aïssa Mandi","Andy Delort","Youcef Atal","Sofiane Feghouli","Haris Belkebla","Islam Slimani","Ryad Boudebouz","Rami Bensebaini"],
+      ["rsa","Bongani Zungu","Themba Zwane","Lyle Foster","Percy Tau","Evidence Makgopa","Ronwen Williams","Nkosinathi Sibisi","Teboho Mokoena","Aphiwe Dyantyi","Siyanda Xulu"],
+      ["aus","Mathew Ryan","Mathew Leckie","Aaron Mooy","Mitchell Duke","Harry Souttar","Aziz Behich","Bailey Wright","Jackson Irvine","Cameron Burgess","Garang Kuol"],
+      ["gha","Mohammed Kudus","Jordan Ayew","Thomas Partey","Daniel Amartey","Mohammed Salisu","Tariq Lamptey","Inaki Williams","Antoine Semenyo","Lawrence Ati-Zigi","Osman Bukari"],
+      ["irn","Mehdi Taremi","Alireza Jahanbakhsh","Sardar Azmoun","Ali Gholizadeh","Saman Ghoddos","Milad Mohammadi","Morteza Pouraliganji","Majid Hosseini","Ehsan Hajsafi","Alireza Beiranvand"],
+      ["bih","Edin Džeko","Miralem Pjanić","Sead Kolašinac","Gojko Cimirot","Anel Hadžić","Ervin Zukanović","Haris Duljevic","Amar Rahmanović","Veldin Karić","Jasmin Bičakčić"],
+      ["cze","Matej Kovář","Jindřich Staněk","Lukáš Horníček","Vladimír Coufal","Tomáš Holes","Ladislav Krejčí","David Zima","Jaroslav Zelený","David Jurásek","David Douděra","Robin Hranáč","Štěpán Chaloupek","Tomáš Souček","Vladimír Darida","Lukáš Provod","Michal Sadílek","Pavel Šulc","Lukáš Červ","Tomáš Ladra","Pavel Bucha","Alexandr Šojka","Denis Višinský","Patrik Schick","Adam Hložek","Ondřej Lingr"],
+      ["tur","Hakan Çalhanoğlu","Arda Güler","Kerem Aktürkoğlu","Kaan Ayhan","Merih Demiral","Çağlar Söyüncü","Yusuf Yazıcı","Ferdi Kadıoğlu","Zeki Çelik","Altay Bayındır"],
+      ["ksa","Salem Al-Dawsari","Firas Al-Buraikan","Mohammed Al-Owais","Salman Al-Faraj","Ali Al-Bulaihi","Sultan Al-Ghannam","Sami Al-Najei","Abdullah Al-Hamdan","Riyadh Sharahili","Hassan Tambakti"],
+      ["pan","Rolando Blackburn","Michael Amir Murillo","Adalberto Carrasquilla","Alberto Quintero","Édgar Bárcenas","Anibal Godoy","Gabriel Torres","Harold Cummings","José Luis Rodríguez","Fidel Escobar"],
+      ["irq","Amjed Attwan","Mohanad Ali","Ali Adnan","Bashar Resan","Safaa Hadi","Hussein Ali","Sherko Karimi","Ahmed Ibrahim","Alaa Abbas","Osama Rashid"],
+      ["qat","Akram Afif","Almoez Ali","Hassan Al-Haydos","Assim Madibo","Pedro Miguel","Karim Boudiaf","Abdelkarim Hassan","Ismail Mohammad","Bassam Al-Rawi","Meshaal Barsham"],
+      ["hai","Nazon","Nesta","Bueno","Léon","Thurston","Altidor","Louis","Pierre-Louis","Guerrier","Cajuste"],
+      ["nzl","Chris Wood","Liberato Cacace","Sarpreet Singh","Winston Reid","Stefan Marinovic","Michael Boxall","Matthew Garbett","Clayton Lewis","Dane Ingham","Bozhidar Kraev"],
+      ["jor","Musa Al-Taamari","Baha Abdel-Rahman","Ahmad Hayel","Yazan Al-Naimat","Khaled Shaaban","Amer Shafi","Nour Ali","Hassan Abdel-Fattah","Ibrahim Iyad","Ahmad Al-Ali"],
+      ["cod","Yannick Bolasie","Chadrac Akolo","Dieu-Merci Mbokani","Neeskens Kebano","Marcel Tisserand","Jonathan Bolingi","Glody Ngonda","Joel Kimwaki","Cedric Bakambu","Arthur Masuaku"],
+      ["swe","Alexander Isak","Emil Forsberg","Viktor Gyökeres","Dejan Kulusevski","Anthony Elanga","Victor Lindelöf","Zlatan Ibrahimović","Marcus Danielson","Jesper Karlsson","Robin Olsen"],
+      ["tun","Wahbi Khazri","Seifeddine Jaziri","Naim Sliti","Youssef Msakni","Dylan Bronn","Hannibal Mejbri","Ali Maaloul","Ellyes Skhiri","Ferjani Sassi","Aymen Dahmen"],
+      ["cur","Leandro Bacuna","Cuco Martina","Rangelo Janga","Rajiv van La Parra","Elson Hooi","Darryl Lachman","Rurickson Lieveld","Juninho","Gevero Markiet","Jairzinho Lont"],
+      ["cpv","Ryan Mendes","Garry Rodrigues","Bebé","Patrick Andrade","Stopira","Steven Fortes","Kenny Rocha","Nando","Diney","Jesé"],
+      ["uzb","Eldor Shomurodov","Abbosbek Fayzullaev","Jaloliddin Masharipov","Jasur Yaxshiboyev","Oybek Bozorov","Adham Haydarov","Otabek Shukurov","Doniyor Ergashev","Akbar Jurayev","Husayn Norchaev"],
+    ];
+    const list=[];
+    raw.forEach(([tid,...names])=>{
+      const tObj=TEAMS.find(t=>t.id===tid)||{flag:"🏳️",name:tid};
+      names.forEach(name=>list.push({name,teamId:tid,flag:tObj.flag,teamName:tObj.name}));
+    });
+    setPlayerList(list);
+  },[playerList]);
+
+  /* Firebase sync */
+  React.useEffect(()=>{
+    const r = db.ref(REF);
+    r.once('value',snap=>{
+      if(!snap.val()) r.set(DEF_STATE);
+    });
+    r.on('value',snap=>{
+      if(snap.val()){
+        setS(prev=>({...DEF_STATE,...snap.val(),
+          sc:{...DEF_STATE.sc,...(snap.val().sc||{})},
+          res:{...DEF_STATE.res,...(snap.val().res||{})},
+          live:{...DEF_STATE.live,...(snap.val().live||{})},
+        }));
+        setFbReady(true);
+      }
+    });
+    return ()=>r.off();
+  },[]);
+
+  /* write helper */
+  const w=(path,val)=>db.ref(`${REF}/${path}`).set(val);
+  const wMany=(obj)=>db.ref(REF).update(obj);
+
+  /* Auto-poll live data (openfootball update ~1x/dag, dus elke 30 min is ruim genoeg) */
+  React.useEffect(()=>{
+    const poll=()=>fetchLive();
+    poll();
+    const id=setInterval(poll,30*60*1000);
+    return ()=>clearInterval(id);
+  },[]);
+
+  /* helpers */
+  const shuffle=a=>{const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;};
+
+  const renderName=(i,size=15)=>{
+    const name=s.names[i]||`Speler ${i+1}`;
+    const {start,len}=PLAYER_META[i].hl;
+    return React.createElement('span',{style:{fontSize:size,color:"#1a1a1a"}},
+      name.slice(0,start),
+      React.createElement('span',{style:{color:PC[i],fontWeight:600}},name.slice(start,start+len).toUpperCase()),
+      name.slice(start+len)
+    );
+  };
+
+  const CardsIcon=({size=15})=>React.createElement('span',{style:{display:"inline-block",position:"relative",width:size*1.3,height:size,verticalAlign:"middle",flexShrink:0}},
+    React.createElement('span',{style:{position:"absolute",left:0,top:0,fontSize:size,lineHeight:1}},"🟨"),
+    React.createElement('span',{style:{position:"absolute",left:size*0.45,top:size*0.15,fontSize:size*0.82,lineHeight:1}},"🟥")
+  );
+
+  const teamGroup=React.useMemo(()=>{const m={};Object.entries(GROUPS).forEach(([g,ids])=>ids.forEach(id=>m[id]=g));return m;},[]);
+  const picks=s.picks||{};
+  const pTeams=React.useMemo(()=>[0,1,2].map(i=>TEAMS.filter(t=>picks[t.id]===i)),[picks]);
+  const sc=s.sc||DEF_STATE.sc;
+  const res=s.res||DEF_STATE.res;
+
+  const tPts=React.useMemo(()=>{
+    const m={};
+    TEAMS.forEach(t=>{let p=0;
+      if((res.r32||[]).includes(t.id))p+=sc.r32;
+      if((res.r16||[]).includes(t.id))p+=sc.r16;
+      if((res.qf||[]).includes(t.id))p+=sc.qf;
+      if((res.sf||[]).includes(t.id))p+=sc.sf;
+      if((res.final||[]).includes(t.id))p+=sc.final;
+      if(res.champion===t.id)p+=sc.champion;
+      m[t.id]=p;});return m;
+  },[res,sc]);
+
+  const teamStats=s.teamStats||{};
+  const worstTeamInfo=React.useMemo(()=>{
+    const drafted=TEAMS.filter(t=>picks[t.id]!==undefined);
+    if(!drafted.length)return null;
+    const hasData=Object.values(teamStats).some(s=>(s.gf||0)>0||(s.ga||0)>0||(s.cards||0)>0);
+    if(!hasData)return null;
+    return [...drafted].map(t=>({...t,pts:tPts[t.id]||0,gd:(teamStats[t.id]?.gf||0)-(teamStats[t.id]?.ga||0),cards:teamStats[t.id]?.cards||0,player:picks[t.id]}))
+      .sort((a,b)=>a.pts!==b.pts?a.pts-b.pts:a.gd!==b.gd?a.gd-b.gd:b.cards-a.cards)[0];
+  },[picks,tPts,teamStats]);
+
+  const pScores=React.useMemo(()=>{
+    const base=[0,1,2].map(i=>pTeams[i].reduce((s,t)=>s+(tPts[t.id]||0),0));
+    if(worstTeamInfo!=null){base[worstTeamInfo.player]+=sc.worst;}
+    if(res.topScorer&&picks[res.topScorer]!==undefined){base[picks[res.topScorer]]+=sc.topScorer||5;}
+    if(res.mostCards&&picks[res.mostCards]!==undefined){base[picks[res.mostCards]]+=(sc.mostCards||-5);}
+    return base;
+  },[pTeams,tPts,worstTeamInfo,sc,res,picks]);
+
+  const ranking=[0,1,2].map(i=>({i,score:pScores[i]})).sort((a,b)=>b.score-a.score);
+  const maxSc=Math.max(...pScores,1);
+
+  /* draft helpers */
+  const top9Order=s.draftOrder||[0,1,2];
+  const bot3Order=s.draftOrder?[...s.draftOrder].reverse():[2,1,0];
+  const curPlayer=s.draftPhase==="top9"?top9Order[s.phaseStep]:s.draftPhase==="bot3"?bot3Order[s.phaseStep]:null;
+
+  const computeLotGroups=(finalPicks)=>{
+    const remaining=ODDS_RANK.filter(id=>finalPicks[id]===undefined);
+    const groups=[];
+    for(let i=0;i<remaining.length;i+=3){
+      const grp=remaining.slice(i,i+3);
+      const order=shuffle([0,1,2]);
+      groups.push(grp.map((teamId,j)=>({teamId,player:order[j]})));
+    }
+    return groups;
+  };
+
+  /* dynamic bot3: bottom 3 teams not already picked in vrije keuze */
+  const vkPicks=s.vkPicks||[];
+  const effectiveBOT3=React.useMemo(()=>{
+    const result=[];
+    for(let i=ODDS_RANK.length-1;i>=0&&result.length<3;i--){
+      if(!vkPicks.includes(ODDS_RANK[i]))result.unshift(ODDS_RANK[i]);
+    }
+    return result;
+  },[vkPicks]);
+
+
+  const pickTeam=tid=>{
+    if(s.draftPhase!=="top9"&&s.draftPhase!=="bot3")return;
+    const player=curPlayer;
+    const newPicks={...picks,[tid]:player};
+    const newVkPicks=s.draftPhase==="top9"?[...(s.vkPicks||[]),tid]:(s.vkPicks||[]);
+    if(s.phaseStep<2){
+      wMany({picks:newPicks,vkPicks:newVkPicks,phaseStep:s.phaseStep+1});
+    }else{
+      if(s.draftPhase==="top9"){
+        wMany({picks:newPicks,vkPicks:newVkPicks,draftPhase:"bot3",phaseStep:0});
+      }else{
+        const groups=computeLotGroups(newPicks);
+        wMany({picks:newPicks,vkPicks:newVkPicks,lotGroups:groups,draftPhase:"loting",lotStep:0,lotRevealed:false});
+      }
+    }
+  };
+
+  const revealGroup=()=>{
+    const group=s.lotGroups[s.lotStep];
+    const newPicks={...picks};
+    group.forEach(({teamId,player})=>{newPicks[teamId]=player;});
+    wMany({picks:newPicks,lotRevealed:true});
+  };
+
+  const nextGroup=()=>{
+    if(s.lotStep+1>=s.lotGroups.length){w('draftPhase','potPred');}
+    else{wMany({lotStep:s.lotStep+1,lotRevealed:false});}
+  };
+
+  const randPick=()=>{
+    const pool=s.draftPhase==="top9"
+      ?TEAMS.filter(t=>picks[t.id]===undefined).map(t=>t.id)
+      :effectiveBOT3.filter(id=>picks[id]===undefined);
+    if(pool.length)pickTeam(pool[Math.floor(Math.random()*pool.length)]);
+  };
+
+  const toggleRnd=(rk,tid)=>{
+    if(rk==="champion"){w('res/champion',res.champion===tid?null:tid);return;}
+    const conf=ROUNDS.find(r=>r.key===rk);
+    const cur2=res[rk]||[];
+    if(cur2.includes(tid)){
+      const nr={...res,[rk]:cur2.filter(id=>id!==tid)};
+      ROUNDS.forEach(r=>{if(r.source&&Array.isArray(nr[r.key]))nr[r.key]=nr[r.key].filter(id=>id!==tid);});
+      if(nr.champion===tid)nr.champion=null;
+      w('res',nr);
+    }else if(cur2.length<conf.max){
+      w(`res/${rk}`,[...cur2,tid]);
+    }
+  };
+
+  const elig=rk=>{const conf=ROUNDS.find(r=>r.key===rk);if(!conf.source)return TEAMS;return TEAMS.filter(t=>(res[conf.source]||[]).includes(t.id));};
+
+  /* ── LIVE DATA FETCH (openfootball/worldcup.json — gratis, geen key) ── */
+  const fetchLive=async()=>{
+    /* openfootball geeft alle wedstrijden met scores + doelpuntenmakers.
+       Geen kaarten in de data → kaarten blijven handmatig (Geavanceerd).
+       Standen, topscorer en knockout-winnaars berekenen we hier zelf. */
+    const URL="https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json";
+    try{
+      let data;
+      try{
+        const r=await fetch(URL,{cache:"no-store"});
+        if(!r.ok)throw new Error("HTTP "+r.status);
+        data=await r.json();
+      }catch(_){
+        /* fallback via proxy voor lokaal testen */
+        const r2=await fetch("https://api.allorigins.win/raw?url="+encodeURIComponent(URL),{cache:"no-store"});
+        data=await r2.json();
+      }
+      const matches=data.matches||[];
+      const live={...DEF_STATE.live,lastUpdated:new Date().toISOString()};
+
+      /* helper: bepaal teamId */
+      const tid=name=>NAT_MAP[name]||null;
+      /* helper: is wedstrijd gespeeld? (heeft een ft-score) */
+      const isDone=m=>m.score&&m.score.ft&&Array.isArray(m.score.ft)&&m.score.ft.length===2;
+
+      /* ── doelpunten per team (gf/ga) + topscorer ── */
+      const goals={},scorers={};
+      matches.forEach(m=>{
+        const hi=tid(m.team1),ai=tid(m.team2);
+        if(hi&&!goals[hi])goals[hi]={gf:0,ga:0};
+        if(ai&&!goals[ai])goals[ai]={gf:0,ga:0};
+        if(isDone(m)){
+          const hg=m.score.ft[0]||0,ag=m.score.ft[1]||0;
+          if(hi){goals[hi].gf+=hg;goals[hi].ga+=ag;}
+          if(ai){goals[ai].gf+=ag;goals[ai].ga+=hg;}
+          /* doelpuntenmakers tellen voor topscorer */
+          (m.goals1||[]).forEach(g=>{if(g.name&&!g.owngoal){scorers[g.name]=(scorers[g.name]||{c:0,team:hi}); scorers[g.name].c++;}});
+          (m.goals2||[]).forEach(g=>{if(g.name&&!g.owngoal){scorers[g.name]=(scorers[g.name]||{c:0,team:ai}); scorers[g.name].c++;}});
+        }
+      });
+      /* topscorer */
+      const scList=Object.entries(scorers).sort((a,b)=>b[1].c-a[1].c);
+      if(scList.length&&scList[0][1].c>0){
+        live.topScorerName=scList[0][0];
+        live.topScorerGoals=scList[0][1].c;
+        live.topScorerTeamId=scList[0][1].team||null;
+      }
+
+      /* ── teamStats (kaarten behouden uit bestaande state) ── */
+      const newStats={};
+      Object.keys(goals).forEach(id=>{
+        newStats[id]={gf:goals[id].gf,ga:goals[id].ga,cards:(s.teamStats?.[id]?.cards)||0};
+      });
+      w('teamStats',newStats);
+
+      /* ── wedstrijdenlijst voor Uitslag-pagina ── */
+      const stageFromRound=r=>{
+        if(/final/i.test(r)&&!/quarter|semi/i.test(r))return"Finale";
+        if(/semi/i.test(r))return"Halve finale";
+        if(/quarter/i.test(r))return"Kwartfinale";
+        if(/round of 16|1\/8/i.test(r))return"Achtste finale";
+        if(/round of 32|1\/16/i.test(r))return"Ronde van 32";
+        return"Groepsfase";
+      };
+      live.matchList=matches.map((m,i)=>({
+        id:i+1,
+        date:m.date||"",
+        time:m.time||"",
+        stage:stageFromRound(m.round||m.group||""),
+        group:(m.group||"").replace("Group ",""),
+        status:isDone(m)?"FINISHED":"SCHEDULED",
+        venue:m.ground||"",
+        home:tid(m.team1)||"",
+        away:tid(m.team2)||"",
+        homeName:m.team1||"",
+        awayName:m.team2||"",
+        hs:isDone(m)?(m.score.ft[0]??null):null,
+        as:isDone(m)?(m.score.ft[1]??null):null,
+        goals:[...(m.goals1||[]).map(g=>({min:g.minute,scorer:g.name||"",teamId:tid(m.team1)||""})),
+               ...(m.goals2||[]).map(g=>({min:g.minute,scorer:g.name||"",teamId:tid(m.team2)||""}))],
+        cards:[]
+      }));
+
+      /* ── groepsstanden zelf berekenen ── */
+      const standings={};
+      matches.forEach(m=>{
+        const g=(m.group||"").replace("Group ","");
+        if(!g||g.length!==1||!/^[A-L]$/.test(g))return;
+        const hi=tid(m.team1),ai=tid(m.team2);
+        if(!standings[g])standings[g]={};
+        [hi,ai].forEach(id=>{if(id&&!standings[g][id])standings[g][id]={id,p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0};});
+        if(isDone(m)&&hi&&ai){
+          const hg=m.score.ft[0]||0,ag=m.score.ft[1]||0;
+          const H=standings[g][hi],A=standings[g][ai];
+          H.p++;A.p++;H.gf+=hg;H.ga+=ag;A.gf+=ag;A.ga+=hg;
+          if(hg>ag){H.w++;H.pts+=3;A.l++;}
+          else if(hg<ag){A.w++;A.pts+=3;H.l++;}
+          else{H.d++;A.d++;H.pts++;A.pts++;}
+        }
+      });
+      const newStandings={};
+      Object.keys(standings).sort().forEach(g=>{
+        newStandings[g]=Object.values(standings[g]).sort((a,b)=>
+          b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga)||b.gf-a.gf);
+      });
+      live.groupStandings=newStandings;
+
+      /* ── knockout: groepswinnaars + beste nummers 3 ── */
+      const newRes={...res};
+      const allGroupsDone=Object.values(newStandings).length===12&&
+        Object.values(newStandings).every(rows=>rows.length===4&&rows.every(r=>r.p>=3));
+      if(allGroupsDone){
+        const r32teams=[];
+        Object.keys(newStandings).sort().forEach(g=>{
+          newStandings[g].slice(0,2).forEach(r=>r32teams.push(r.id));
+        });
+        const thirds=Object.values(newStandings)
+          .map(rows=>rows[2]).filter(Boolean)
+          .sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga)||b.gf-a.gf)
+          .slice(0,8).map(r=>r.id);
+        newRes.r32=[...r32teams,...thirds];
+      }
+      /* knockout-winnaars uit gespeelde knockout-wedstrijden */
+      const roundKey=r=>{
+        if(/^final$/i.test((r||"").trim()))return"champion";
+        if(/semi/i.test(r))return"sf";
+        if(/quarter/i.test(r))return"qf";
+        if(/round of 16|1\/8/i.test(r))return"r16";
+        if(/round of 32|1\/16/i.test(r))return"r32ko";
+        return null;
+      };
+      matches.forEach(m=>{
+        if(!isDone(m))return;
+        const rk=roundKey(m.round||"");if(!rk)return;
+        const hg=m.score.ft[0]||0,ag=m.score.ft[1]||0;
+        let winName;
+        if(m.score.p&&m.score.p.length===2){winName=m.score.p[0]>m.score.p[1]?m.team1:m.team2;}
+        else if(hg!==ag){winName=hg>ag?m.team1:m.team2;}
+        else return;
+        const winId=tid(winName);if(!winId)return;
+        if(rk==="champion")newRes.champion=winId;
+        else if(rk!=="r32ko"){const arr=newRes[rk]||[];if(!arr.includes(winId))newRes[rk]=[...arr,winId];}
+      });
+      w('res',newRes);
+      if(live.topScorerTeamId&&live.topScorerGoals>0)w('res/topScorer',live.topScorerTeamId);
+
+      w('live',live);
+      setApiStatus({ok:true,msg:`Bijgewerkt ${new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}`});
+      fetchBestPlayer();
+      fetchCards();
+    }catch(e){setApiStatus({ok:false,msg:e.message||"Fout bij ophalen"});}
+  };
+
+  const fetchBestPlayer=async()=>{
+    try{
+      const r=await fetch("https://en.wikipedia.org/w/api.php?action=query&titles=2026_FIFA_World_Cup&prop=revisions&rvprop=content&rvsection=0&format=json&origin=*");
+      const d=await r.json();
+      const pages=d.query?.pages||{};
+      const content=Object.values(pages)[0]?.revisions?.[0]?.['*']||"";
+      const match=content.match(/[Gg]olden [Bb]all[^|]*\|([^|}]+)/);
+      if(match){
+        const name=match[1].replace(/\[\[|\]\]/g,"").replace(/\|.*/,"").trim();
+        if(name&&name.length>2)w('potPlayer',name);
+      }
+    }catch(_){}
+  };
+
+  /* ── KAARTEN via API-Football (1x per dag) ── */
+  const fetchCards=async()=>{
+    const AFKEY="8ca4960fd83f270d36bac945162f4471";
+    const today=new Date().toISOString().slice(0,10);
+    if(s.live?.lastCardsFetch===today)return;
+    try{
+      /* Haal gespeelde wedstrijden op — events zijn beschikbaar per fixture */
+      const r=await fetch("https://v3.football.api-sports.io/fixtures?league=1&season=2026",{
+        headers:{"x-apisports-key":AFKEY}
+      });
+      const d=await r.json();
+      if(!d.response||!d.response.length)return;
+      /* Zoek wedstrijden die al gespeeld zijn */
+      const played=d.response.filter(fx=>{
+        const st=fx.fixture?.status?.short||"";
+        return["FT","AET","PEN"].includes(st);
+      });
+      if(!played.length)return;
+      /* Haal events op voor gespeelde wedstrijden (max 5 calls om binnen limiet te blijven) */
+      const cardCount={};
+      const cardsByMatch={};
+      const toFetch=played.slice(0,5); /* max 5 per keer */
+      await Promise.all(toFetch.map(async(fx)=>{
+        try{
+          const fxId=fx.fixture?.id;
+          if(!fxId)return;
+          const er=await fetch(`https://v3.football.api-sports.io/fixtures/events?fixture=${fxId}&type=Card`,{
+            headers:{"x-apisports-key":AFKEY}
+          });
+          const ed=await er.json();
+          const events=ed.response||[];
+          const homeId=NAT_MAP[fx.teams?.home?.name]||"";
+          const awayId=NAT_MAP[fx.teams?.away?.name]||"";
+          const fixtureDate=(fx.fixture?.date||"").slice(0,10);
+          const cards=events.map(e=>({
+            min:e.time?.elapsed||0,
+            player:e.player?.name||"",
+            teamId:NAT_MAP[e.team?.name]||"",
+            type:(e.detail||"").toLowerCase().includes("red")?"R":"Y"
+          }));
+          cards.forEach(c=>{
+            if(!c.teamId)return;
+            if(!cardCount[c.teamId])cardCount[c.teamId]=0;
+            cardCount[c.teamId]+=(c.type==="R"?2:1);
+          });
+          if(cards.length>0){
+            const matchKey=`${fixtureDate}_${homeId}_${awayId}`;
+            cardsByMatch[matchKey]=cards;
+          }
+        }catch(_){}
+      }));
+      /* meeste kaarten bijwerken */
+      const sorted=Object.entries(cardCount).sort((a,b)=>b[1]-a[1]);
+      if(sorted.length&&sorted[0][1]>0){
+        w('live/mostCardsTeamId',sorted[0][0]);
+        w('live/mostCardsCount',sorted[0][1]);
+        w('res/mostCards',sorted[0][0]);
+      }
+      /* kaarten opslaan in Firebase matchList */
+      if(Object.keys(cardsByMatch).length>0){
+        const newML=(s.live?.matchList||[]).map(m=>{
+          const k=`${m.date}_${m.home}_${m.away}`;
+          const k2=`${m.date}_${m.away}_${m.home}`;
+          const cards=cardsByMatch[k]||cardsByMatch[k2];
+          return cards?{...m,cards}:m;
+        });
+        w('live/matchList',newML);
+      }
+      w('live/lastCardsFetch',today);
+    }catch(e){console.warn("Kaarten fetch mislukt:",e.message);}
+  };
+
+  const fetchManual=async()=>{
+    setApiLoading(true);
+    setApiStatus({ok:null,msg:"Ophalen..."});
+    await fetchLive();
+    setApiLoading(false);
+  };
+
+  /* ── nav ── */
+  const navStyle=k=>({flex:1,padding:"8px 4px",border:`0.5px solid ${phase===k?PC[0]:"#ccc"}`,borderRadius:8,background:phase===k?PL[0]:"transparent",color:phase===k?PD[0]:"#666",cursor:"pointer",fontSize:12,fontWeight:phase===k?500:400,textAlign:"center"});
+  const cardStyle={border:"0.5px solid #e0e0e0",borderRadius:12,overflow:"hidden",marginBottom:12};
+
+  const PlayerSidebar=()=>(
+    React.createElement('div',{style:{display:"flex",flexDirection:"column",gap:6}},
+      [0,1,2].map(i=>
+        React.createElement('div',{key:i,style:{border:`0.5px solid ${s.draftPhase!=="done"&&i===curPlayer?PC[i]:"#ddd"}`,borderRadius:8,overflow:"hidden"}},
+          React.createElement('div',{style:{padding:"5px 8px",background:s.draftPhase!=="done"&&i===curPlayer?PL[i]:"#f5f5f5",display:"flex",alignItems:"center",gap:6}},
+            React.createElement('div',{style:{width:8,height:8,borderRadius:"50%",background:PC[i],flexShrink:0}}),
+            React.createElement('span',{style:{fontSize:11}},renderName(i,11),` (${pTeams[i].length})`)
+          ),
+          React.createElement('div',{style:{padding:"4px 6px",maxHeight:130,overflowY:"auto"}},
+            pTeams[i].map(t=>React.createElement('div',{key:t.id,style:{fontSize:10,padding:"1px 0",display:"flex",gap:3}},
+              React.createElement('span',null,t.flag),React.createElement('span',null,t.name)
+            ))
+          )
+        )
+      )
+    )
+  );
+
+  return FIREBASE_CONFIG.apiKey==="JOUW_API_KEY"
+    ? React.createElement('div',{style:{maxWidth:480,margin:"40px auto",padding:20,border:"1.5px solid #f0a",borderRadius:12,fontFamily:"monospace",fontSize:13,lineHeight:1.8}},
+        React.createElement('p',{style:{fontWeight:700,marginBottom:12,fontSize:16}},"⚙️ Configuratie vereist"),
+        React.createElement('p',null,"Open dit HTML-bestand in een teksteditor en vul in:"),
+        React.createElement('ul',{style:{marginLeft:20,marginTop:8}},
+          React.createElement('li',null,"FIREBASE_CONFIG — je Firebase project config"),
+          React.createElement('li',null,"FD_KEY — je football-data.org API token")
+        ),
+        React.createElement('p',{style:{marginTop:12,color:"#333"}},"Daarna upload je het naar GitHub Pages.")
+      )
+    : !fbReady
+    ? React.createElement('div',{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",fontSize:14,color:"#555"}},
+        "Verbinden met Firebase...")
+    : currentPlayer===null
+    ? React.createElement('div',{style:{fontFamily:"system-ui,sans-serif",minHeight:"100vh",background:"#f5f5f5",display:"flex",alignItems:"center",justifyContent:"center",padding:16}},
+      React.createElement('div',{style:{width:"100%",maxWidth:360,background:"white",borderRadius:16,padding:28,boxShadow:"0 4px 24px rgba(0,0,0,0.10)"}},
+        React.createElement('div',{style:{textAlign:"center",marginBottom:24}},
+          React.createElement('div',{style:{fontSize:40,marginBottom:8}},"⚽"),
+          React.createElement('p',{style:{fontSize:20,fontWeight:700,color:"#111",margin:0}},"WK 2026 Poultje"),
+          React.createElement('p',{style:{fontSize:13,color:"#888",marginTop:4}},"Wie ben jij?")
+        ),
+        loginStep===0
+          ? React.createElement('div',{style:{display:"flex",flexDirection:"column",gap:10}},
+              [0,1,2].map(i=>React.createElement('button',{key:i,onClick:()=>{setLoginSelected(i);setLoginStep(1);setLoginErr(false);setLoginPw("");},
+                style:{padding:"14px 16px",border:`1.5px solid ${PC[i]}`,borderRadius:12,background:PL[i],cursor:"pointer",display:"flex",alignItems:"center",gap:12,fontSize:15,fontWeight:600,color:PD[i]}},
+                React.createElement('div',{style:{width:36,height:36,borderRadius:"50%",background:PC[i],display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontWeight:700,fontSize:16,flexShrink:0}},["T","O","B"][i]),
+                React.createElement('span',null,["TIMas Rosický","OLAVksandr Zinchenko","roBARTo Carlos"][i].replace("TIMas","TIMas").replace("OLAVksandr","OLAVksandr").replace("roBARTo","roBARTo"))
+              ))
+            )
+          : React.createElement('div',null,
+              React.createElement('button',{onClick:()=>{setLoginStep(0);setLoginErr(false);},style:{background:"none",border:"none",cursor:"pointer",fontSize:12,color:"#888",marginBottom:16,padding:0}},"← Terug"),
+              React.createElement('p',{style:{fontSize:14,fontWeight:500,color:PD[loginSelected],marginBottom:12}},
+                ["TIMas Rosický","OLAVksandr Zinchenko","roBARTo Carlos"][loginSelected]," — vul je wachtwoord in:"),
+              React.createElement('input',{type:"password",value:loginPw,onChange:e=>setLoginPw(e.target.value),
+                onKeyDown:e=>e.key==="Enter"&&doLogin(loginSelected,loginPw),
+                autoFocus:true,placeholder:"Wachtwoord",
+                style:{width:"100%",padding:"10px 14px",fontSize:16,border:`1.5px solid ${loginErr?PC[2]:PC[loginSelected]}`,borderRadius:10,boxSizing:"border-box",marginBottom:8,letterSpacing:4}}),
+              loginErr&&React.createElement('p',{style:{fontSize:12,color:PC[2],marginBottom:8}},"Verkeerd wachtwoord, probeer opnieuw."),
+              React.createElement('button',{onClick:()=>doLogin(loginSelected,loginPw),
+                style:{width:"100%",padding:"12px",fontSize:14,fontWeight:600,background:PC[loginSelected],color:"white",border:"none",borderRadius:10,cursor:"pointer"}},
+                "Inloggen →")
+            )
+      )
+    )
+    : React.createElement('div',{style:{fontFamily:"system-ui,sans-serif",color:"#1a1a1a",padding:"4px 4px 32px",maxWidth:680,margin:"0 auto",minHeight:"100vh"}},
+
+    /* login indicator */
+    React.createElement('div',{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8,padding:"6px 4px"}},
+      React.createElement('div',{style:{display:"flex",alignItems:"center",gap:6}},
+        React.createElement('div',{style:{width:8,height:8,borderRadius:"50%",background:PC[currentPlayer]}}),
+        React.createElement('span',{style:{fontSize:11,color:"#666"}},["TIMas Rosický","OLAVksandr Zinchenko","roBARTo Carlos"][currentPlayer].replace(/^(TIM|OLAV|BART)/,m=>`${m}`))
+      ),
+      React.createElement('button',{onClick:doLogout,style:{fontSize:10,color:"#aaa",background:"none",border:"none",cursor:"pointer",padding:"2px 6px"}},"Uitloggen")
+    ),
+
+    /* nav */
+    React.createElement('div',{style:{display:"flex",gap:4,paddingBottom:"0.75rem",borderBottom:"0.5px solid #e0e0e0",marginBottom:"1.25rem"}},
+      [{k:"draft",l:"Draft",ic:"🎯"},{k:"results",l:"Uitslagen",ic:"📊"},{k:"standings",l:"Stand",ic:"🏅"},{k:"setup",l:"Spel-overzicht",ic:"📋"}].map(n=>
+        React.createElement('button',{key:n.k,onClick:()=>setPhase(n.k),style:navStyle(n.k)},
+          React.createElement('div',{style:{fontSize:16,marginBottom:2}},n.ic),n.l
+        )
+      )
+    ),
+
+    /* ── SETUP ── */
+    phase==="setup" && React.createElement('div',null,
+      React.createElement('p',{style:{fontSize:13,color:"#666",marginBottom:8}},"Spelersnamen"),
+      [0,1,2].map(i=>React.createElement('div',{key:i,style:{display:"flex",alignItems:"center",gap:10,marginBottom:10}},
+        React.createElement('div',{style:{width:10,height:10,borderRadius:"50%",background:PC[i],flexShrink:0}}),
+        React.createElement('div',{style:{flex:1,fontSize:14,padding:"6px 10px",border:`0.5px solid ${PC[i]}`,borderRadius:8,background:"#fafafa"}},
+          renderName(i,14)
+        )
+      )),
+
+      /* puntensysteem */
+      React.createElement('div',{style:{marginTop:14,borderTop:"0.5px solid #e0e0e0",paddingTop:12}},
+        React.createElement('button',{onClick:()=>setShowSc(!showSc),style:{fontSize:12,color:"#666",background:"none",border:"none",cursor:"pointer",padding:0}},
+          showSc?"▲ ":"▼ ","Puntensysteem bekijken"),
+        showSc && React.createElement('div',{style:{marginTop:10}},
+          [["r32","Door groepsfase"],["r16","R32 gewonnen"],["qf","Achtste finale gewonnen"],["sf","Kwartfinale gewonnen"],["final","Halve finale gewonnen"],["champion","Wereldkampioen"],["worst","Slechtste team (straf)"],["topScorer","Topscoorder bonus"],["mostCards","Meeste kaarten (straf)"]].map(([k,l])=>
+            React.createElement('div',{key:k,style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}},
+              React.createElement('span',{style:{fontSize:12,color:(k==="worst"||k==="mostCards")?PC[2]:"#666"}},l),
+              React.createElement('span',{style:{fontSize:13,fontWeight:500,color:sc[k]<0?PC[2]:PC[1]}},sc[k]>0?"+":"",sc[k])
+            )
+          ),
+          React.createElement('p',{style:{fontSize:10,color:"#666",marginTop:6,lineHeight:1.5}},"Slechtste team = minste punten → slechtste doelsaldo → meeste kaarten")
+        )
+      ),
+
+      /* groepen */
+      React.createElement('div',{style:{marginTop:12,borderTop:"0.5px solid #e0e0e0",paddingTop:12}},
+        React.createElement('button',{onClick:()=>setShowTm(!showTm),style:{fontSize:12,color:"#666",background:"none",border:"none",cursor:"pointer",padding:0}},
+          showTm?"▲ ":"▼ ","Groepsindeling bekijken (48 teams)"),
+        showTm && React.createElement('div',{style:{marginTop:8,display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:6}},
+          Object.entries(GROUPS).map(([g,ids])=>
+            React.createElement('div',{key:g,style:{border:"0.5px solid #ddd",borderRadius:8,overflow:"hidden"}},
+              React.createElement('div',{style:{padding:"3px 8px",background:"#f5f5f5",fontSize:11,fontWeight:500,color:"#333"}},`Groep ${g}`),
+              ids.map(id=>{const t=TEAMS.find(x=>x.id===id);return t?React.createElement('div',{key:id,style:{display:"flex",alignItems:"center",gap:5,padding:"3px 8px",fontSize:11,borderTop:"0.5px solid #f0f0f0"}},React.createElement('span',null,t.flag),React.createElement('span',{style:{color:"#1a1a1a"}},t.name)):null;})
+            )
+          )
+        )
+      ),
+
+      /* spelregels */
+      React.createElement('div',{style:{marginTop:12,borderTop:"0.5px solid #e0e0e0",paddingTop:12}},
+        React.createElement('button',{onClick:()=>setShowSr(!showSr),style:{fontSize:12,color:"#666",background:"none",border:"none",cursor:"pointer",padding:0}},
+          showSr?"▲ ":"▼ ","Spelregels & prijzen bekijken"),
+        showSr&&React.createElement('div',{style:{marginTop:10}},
+          React.createElement('div',{style:{display:"flex",flexDirection:"column",gap:6,marginBottom:8}},
+            [{rank:"1e",medal:"🥇",prize:"Shirt van het winnende land",detail:"(knock-off mag)",color:PC[1],bg:PL[1],dark:PD[1]},{rank:"2e",medal:"🥈",prize:"Activiteit organiseren",detail:"+ tourguide",color:PC[0],bg:PL[0],dark:PD[0]},{rank:"3e",medal:"🥉",prize:"Weekend organiseren",detail:"",color:"#333",bg:"#f5f5f5",dark:"#333"}].map(({rank,medal,prize,detail,color,bg,dark})=>
+              React.createElement('div',{key:rank,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:8,background:bg,border:`0.5px solid ${color}22`}},
+                React.createElement('span',{style:{fontSize:18,flexShrink:0}},medal),
+                React.createElement('div',{style:{flex:1}},
+                  React.createElement('span',{style:{fontSize:12,fontWeight:500,color:dark}},`${rank} plek — ${prize}`),
+                  detail&&React.createElement('span',{style:{fontSize:11,color:color,marginLeft:5}},detail))))),
+          React.createElement('div',{style:{padding:"8px 12px",borderRadius:8,background:"#f8f8f8",fontSize:11,color:"#666",lineHeight:1.8}},
+            React.createElement('strong',{style:{color:"#888"}},"Aparte prijzen"),React.createElement('br'),
+            "⚽ ",React.createElement('strong',null,"Topscoorder")," — eigenaar kiest 2 drankjes p.p.",React.createElement('br'),
+            React.createElement('span',{style:{display:"inline-flex",alignItems:"center",gap:3}},React.createElement(CardsIcon,{size:11}),React.createElement('strong',null," Meeste kaarten")," — eigenaar doet butler-service 1 avond"),React.createElement('br'),
+            "💀 ",React.createElement('strong',null,"Slechtste team")," — eigenaar krijgt ",sc.worst," punten straf",React.createElement('br'),
+            "🌟 ",React.createElement('strong',null,"Speler van het Toernooi")," — eigenaar kiest wie jaar lang foto speler in huis hangt")
+        )
+      ),
+
+      /* draft systeem */
+      React.createElement('div',{style:{marginTop:12,borderTop:"0.5px solid #e0e0e0",paddingTop:12}},
+        React.createElement('button',{onClick:()=>setShowDs(!showDs),style:{fontSize:12,color:"#666",background:"none",border:"none",cursor:"pointer",padding:0}},
+          showDs?"▲ ":"▼ ","Draft-systeem bekijken"),
+        showDs&&React.createElement('div',{style:{marginTop:10}},
+          React.createElement('div',{style:{fontSize:11,color:"#666",lineHeight:1.8,background:"#f8f8f8",padding:"10px 12px",borderRadius:8,marginBottom:8}},
+            React.createElement('strong',null,"0. Loting volgorde")," — wie eerst mag kiezen wordt wordt geloot",React.createElement('br'),
+            React.createElement('strong',null,"1. Vrije keuze")," — iedereen kiest 1 team naar keuze (snake)",React.createElement('br'),
+            React.createElement('strong',null,"2. Onderste 3")," — iedereen kiest 1 underdog (omgekeerde volgorde)",React.createElement('br'),
+            React.createElement('strong',null,"3. Loting")," — 42 teams in 14 groepjes van 3, random verdeeld"
+          ),
+          React.createElement('div',{style:{padding:"8px 12px",borderRadius:8,background:"#FAFAF0",border:"0.5px solid #e0d800",fontSize:11,color:"#666",lineHeight:1.7}},
+            "🌟 ",React.createElement('strong',null,"Speler van het Toernooi")," — geheime voorspelling wordt gevraagd na de draft. Elke speler vult apart in. Wordt automatisch onthuld na de finale."
+          )
+        )
+      ),
+
+      /* API */
+      React.createElement('div',{style:{marginTop:12,borderTop:"0.5px solid #e0e0e0",paddingTop:12}},
+        React.createElement('p',{style:{fontSize:12,color:"#666",marginBottom:4}},"📡 Databron",
+          React.createElement('span',{style:{color:PC[1],marginLeft:6,fontSize:11}},"openfootball (gratis)")
+        ),
+        React.createElement('p',{style:{fontSize:10,color:"#666",lineHeight:1.5}},"Uitslagen en doelpuntenmakers komen van de gratis openfootball-database. Deze wordt ~1× per dag bijgewerkt, dus tussenstanden verschijnen meestal de ochtend na de wedstrijd. Kaarten (meeste kaarten-prijs) vul je handmatig in.")
+      ),
+
+      React.createElement('div',{style:{marginTop:8}},
+        React.createElement('button',{onClick:()=>{
+          if(showStats){setShowStats(false);}
+          else if(geavPass){setShowStats(true);}
+          else{const p=window.prompt("Wachtwoord:");if(p==="0607"){setGeavPass(true);setShowStats(true);}}
+        },style:{fontSize:11,color:"#999",background:"none",border:"none",cursor:"pointer",padding:0}},
+          showStats?"▲ ":"▼ ","Geavanceerd"),
+        showStats&&React.createElement('div',{style:{marginTop:10,display:"flex",flexDirection:"column",gap:10}},
+          React.createElement('label',{style:{display:"flex",alignItems:"center",gap:10,cursor:"pointer",padding:"10px 12px",border:`1px solid ${s.draftEnabled?PC[1]:"#ddd"}`,borderRadius:8,background:s.draftEnabled?PL[1]:"#f9f9f9"}},
+            React.createElement('input',{type:"checkbox",checked:!!s.draftEnabled,onChange:e=>w('draftEnabled',e.target.checked),style:{width:18,height:18,accentColor:PC[1],cursor:"pointer"}}),
+            React.createElement('div',null,
+              React.createElement('div',{style:{fontSize:13,fontWeight:500,color:s.draftEnabled?PD[1]:"#333"}},"Draft inschakelen"),
+              React.createElement('div',{style:{fontSize:11,color:"#888",marginTop:2}},"Vink aan om de draft-knop te activeren op de Draft-pagina")
+            )
+          ),
+          /* handmatige kaarten-selectie (openfootball heeft geen kaartdata) */
+          React.createElement('div',{style:{padding:"10px 12px",border:"1px solid #ddd",borderRadius:8,background:"#f9f9f9"}},
+            React.createElement('div',{style:{fontSize:13,fontWeight:500,color:"#333",marginBottom:2}},"🟥 Meeste kaarten (handmatig)"),
+            React.createElement('div',{style:{fontSize:11,color:"#888",marginBottom:8}},"Kies aan het eind het team met de meeste kaarten. Dit team krijgt de -6 straf."),
+            React.createElement('select',{
+              value:s.live?.mostCardsTeamId||"",
+              onChange:e=>{const v=e.target.value||null;w('live/mostCardsTeamId',v);w('res/mostCards',v);},
+              style:{width:"100%",padding:"8px 10px",fontSize:13,border:"0.5px solid #ccc",borderRadius:8,background:"white"}
+            },
+              React.createElement('option',{value:""},"— nog niet bepaald —"),
+              [...TEAMS].sort((a,b)=>a.name.localeCompare(b.name)).map(t=>
+                React.createElement('option',{key:t.id,value:t.id},`${t.flag} ${t.name}`))
+            )
+          ),
+          React.createElement('button',{onClick:()=>{
+            if(window.confirm("Weet je zeker dat je alles wilt resetten? Draft, uitslagen en alle data worden gewist.")){
+              db.ref(REF).set(DEF_STATE);
+            }
+          },style:{width:"100%",padding:"10px",fontSize:12,fontWeight:400,background:"transparent",color:PC[2],border:`0.5px solid ${PC[2]}`,borderRadius:8,cursor:"pointer"}},
+            "Reset alles (opnieuw beginnen)")
+        )
+      )
+    ),
+
+    /* ── DRAFT ── */
+    phase==="draft" && React.createElement('div',null,
+
+      /* LANDING — nog niet begonnen */
+      s.draftPhase==="order"&&!s.orderRevealed&&!draftStarted&&React.createElement('div',{style:{textAlign:"center",padding:"24px 16px"}},
+        React.createElement('p',{style:{fontSize:28,marginBottom:8}},"🎯"),
+        React.createElement('p',{style:{fontSize:18,fontWeight:600,marginBottom:6,color:"#1a1a1a"}},"Draft"),
+        React.createElement('p',{style:{fontSize:13,color:"#333",marginBottom:24,lineHeight:1.6}},"Eerst wordt geloot wie als eerste mag kiezen, daarna begint de vrije keuze."),
+        React.createElement('div',{style:{border:`0.5px solid ${PC[0]}44`,borderRadius:12,padding:"14px",marginBottom:20,background:PL[0],textAlign:"left"}},
+          [
+            ["1. Loting","Wie mag als eerste kiezen wordt wordt geloot"],
+            ["2. Vrije keuze","Iedereen kiest 1 team (snake-volgorde)"],
+            ["3. Onderste 3","Iedereen kiest 1 underdog (omgekeerde volgorde)"],
+            ["4. Loting","42 teams in 14 groepjes van 3, random verdeeld"],
+            ["5. Speler v/h Toernooi","Geheime voorspelling invullen"],
+          ].map(([step,desc],i)=>React.createElement('div',{key:i,style:{display:"flex",gap:8,marginBottom:5,fontSize:11}},
+            React.createElement('span',{style:{color:"#1a5fb4",fontWeight:700,minWidth:20}},step.split(".")[0]+"."),
+            React.createElement('div',null,React.createElement('span',{style:{fontWeight:600,color:"#111"}},step.split(". ")[1])," — ",React.createElement('span',{style:{color:"#333",fontWeight:400}},desc))
+          ))
+        ),
+        React.createElement('button',{
+          onClick:()=>s.draftEnabled&&setDraftStarted(true),
+          style:{width:"100%",padding:"14px",fontSize:15,fontWeight:600,background:s.draftEnabled?PC[0]:"#ccc",color:"white",border:"none",borderRadius:10,cursor:s.draftEnabled?"pointer":"not-allowed",opacity:s.draftEnabled?1:0.7}}
+        ,s.draftEnabled?"🎲 Begin de Draft — Loot de volgorde":"🔒 Draft nog niet beschikbaar")
+      ),
+
+      /* ORDER */
+      s.draftPhase==="order"&&(s.orderRevealed||draftStarted)&&React.createElement('div',{style:{textAlign:"center",padding:"8px 0 16px"}},
+        React.createElement('p',{style:{fontSize:16,fontWeight:500,marginBottom:4}},"🎲 Wie mag als eerste kiezen?"),
+        React.createElement('p',{style:{fontSize:12,color:"#666",marginBottom:20}},"Loot de volgorde voor de vrije keuze"),
+        !s.orderRevealed
+          ? React.createElement('div',null,
+              React.createElement('div',{style:{display:"flex",gap:10,justifyContent:"center",marginBottom:20}},
+                [0,1,2].map(i=>React.createElement('div',{key:i,style:{width:90,padding:"14px 8px",border:`1.5px solid ${PC[i]}`,borderRadius:12,background:PL[i],display:"flex",flexDirection:"column",alignItems:"center",gap:6}},
+                  React.createElement('div',{style:{width:32,height:32,borderRadius:"50%",background:PC[i],display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontSize:18}},"?"),
+                  React.createElement('span',{style:{fontSize:12}},renderName(i,12))
+                ))
+              ),
+              React.createElement('button',{onClick:()=>{const o=shuffle([0,1,2]);wMany({draftOrder:o,orderRevealed:true});},style:{padding:"12px 32px",fontSize:15,fontWeight:500,background:"#f0f0f0",color:"#111",border:"none",borderRadius:10,cursor:"pointer"}},"🎲 Loot volgorde!")
+            )
+          : React.createElement('div',null,
+              React.createElement('div',{style:{display:"flex",gap:10,justifyContent:"center",marginBottom:16}},
+                (s.draftOrder||[0,1,2]).map((playerIdx,pos)=>
+                  React.createElement('div',{key:pos,style:{width:100,padding:"14px 8px",border:`1.5px solid ${PC[playerIdx]}`,borderRadius:12,background:PL[playerIdx],display:"flex",flexDirection:"column",alignItems:"center",gap:6,textAlign:"center"}},
+                    React.createElement('span',{style:{fontSize:24}},["🥇","🥈","🥉"][pos]),
+                    React.createElement('span',{style:{fontSize:11,color:PD[playerIdx],fontWeight:500}},renderName(playerIdx,11)),
+                    React.createElement('span',{style:{fontSize:10,color:PC[playerIdx]}},["Kiest eerst","Kiest tweede","Kiest derde"][pos])
+                  )
+                )
+              ),
+              React.createElement('p',{style:{fontSize:11,color:"#666",marginBottom:12}},
+                "Onderste 3 omgekeerd: ",(s.draftOrder?[...s.draftOrder].reverse():[2,1,0]).map(i=>(s.names[i]||`S${i+1}`).split(" ")[0]).join(" → ")
+              ),
+              React.createElement('button',{onClick:()=>w('draftPhase','top9'),style:{padding:"12px 32px",fontSize:14,fontWeight:500,background:PC[0],color:"white",border:"none",borderRadius:10,cursor:"pointer"}},"Start Draft →")
+            )
+      ),
+
+      /* VRIJE KEUZE */
+      s.draftPhase==="top9" && React.createElement(React.Fragment,null,
+        currentPlayer!==curPlayer
+          ? React.createElement('div',{style:{textAlign:"center",padding:"32px 16px"}},
+              React.createElement('div',{style:{fontSize:32,marginBottom:12}},"⏳"),
+              React.createElement('p',{style:{fontSize:16,fontWeight:500,color:"#333",marginBottom:6}},"Wacht even..."),
+              React.createElement('p',{style:{fontSize:13,color:"#666"}},renderName(curPlayer,13)," is aan het kiezen")
+            )
+          : React.createElement(React.Fragment,null,
+        React.createElement('div',{style:{padding:"10px 14px",borderRadius:8,marginBottom:12,background:PL[curPlayer],border:`0.5px solid ${PC[curPlayer]}`}},
+          React.createElement('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
+            React.createElement('div',null,
+              React.createElement('p',{style:{fontSize:10,color:PD[curPlayer],margin:0,fontWeight:500,textTransform:"uppercase",letterSpacing:0.5}},"🎯 Vrije keuze — kies je favoriete team"),
+              React.createElement('p',{style:{fontSize:15,fontWeight:500,margin:"3px 0 0",color:PD[curPlayer]}},renderName(curPlayer,15)," kiest (",s.phaseStep+1,"/3)")
+            ),
+            React.createElement('button',{onClick:randPick,style:{fontSize:11,padding:"4px 10px",border:`0.5px solid ${PC[curPlayer]}`,borderRadius:7,background:"transparent",color:PD[curPlayer],cursor:"pointer"}},"🎲 Random")
+          )
+        ),
+        React.createElement('div',{style:{display:"grid",gridTemplateColumns:"1fr 180px",gap:10}},
+          React.createElement('div',null,
+            React.createElement('input',{value:freeSearch,onChange:e=>setFreeSearch(e.target.value),placeholder:"🔍 Zoek land...",style:{width:"100%",marginBottom:6,fontSize:13,padding:"6px 10px",border:"0.5px solid #ddd",background:"#f0f0f0",color:"#1a1a1a",borderRadius:8,boxSizing:"border-box"}}),
+            React.createElement('div',{style:{display:"flex",gap:3,flexWrap:"wrap",marginBottom:8}},
+              ["Alle","A","B","C","D","E","F","G","H","I","J","K","L"].map(g=>
+                React.createElement('button',{key:g,onClick:()=>setFreeFilter(g),style:{fontSize:10,padding:"2px 7px",borderRadius:6,cursor:"pointer",border:`0.5px solid ${freeFilter===g?PC[curPlayer]:"#ddd"}`,background:freeFilter===g?PL[curPlayer]:"transparent",color:freeFilter===g?PD[curPlayer]:"#666"}},g)
+              )
+            ),
+            React.createElement('div',{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(86px,1fr))",gap:4,maxHeight:320,overflowY:"auto"}},
+              TEAMS.filter(t=>picks[t.id]===undefined&&t.name.toLowerCase().includes(freeSearch.toLowerCase())&&(freeFilter==="Alle"||teamGroup[t.id]===freeFilter)).map(t=>
+                React.createElement('button',{key:t.id,onClick:()=>pickTeam(t.id),style:{padding:"7px 5px",border:"0.5px solid #ddd",borderRadius:8,fontSize:11,background:"white",display:"flex",flexDirection:"column",alignItems:"center",gap:1,cursor:"pointer"}},
+                  React.createElement('span',{style:{fontSize:19}},t.flag),
+                  React.createElement('span',{style:{lineHeight:1.2,textAlign:"center"}},t.name),
+                  React.createElement('span',{style:{fontSize:9,color:"#666"}},`Groep ${teamGroup[t.id]}`)
+                )
+              )
+            )
+          ),
+          React.createElement(PlayerSidebar)
+        )
+          ) /* end top9 isMyTurn */
+      ),
+
+      /* ONDERSTE 3 */
+      s.draftPhase==="bot3" && React.createElement(React.Fragment,null,
+        currentPlayer!==curPlayer
+          ? React.createElement('div',{style:{textAlign:"center",padding:"32px 16px"}},
+              React.createElement('div',{style:{fontSize:32,marginBottom:12}},"⏳"),
+              React.createElement('p',{style:{fontSize:16,fontWeight:500,color:"#333",marginBottom:6}},"Wacht even..."),
+              React.createElement('p',{style:{fontSize:13,color:"#666"}},renderName(curPlayer,13)," kiest zijn underdog")
+            )
+          : React.createElement(React.Fragment,null,
+        React.createElement('div',{style:{padding:"10px 14px",borderRadius:8,marginBottom:12,background:PL[curPlayer],border:`0.5px solid ${PC[curPlayer]}`}},
+          React.createElement('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
+            React.createElement('div',null,
+              React.createElement('p',{style:{fontSize:10,color:PD[curPlayer],margin:0,fontWeight:500,textTransform:"uppercase",letterSpacing:0.5}},"💀 Onderste 3 — kies je underdog"),
+              React.createElement('p',{style:{fontSize:15,fontWeight:500,margin:"3px 0 0",color:PD[curPlayer]}},renderName(curPlayer,15)," kiest (",s.phaseStep+1,"/3)")
+            ),
+            React.createElement('button',{onClick:randPick,style:{fontSize:11,padding:"4px 10px",border:`0.5px solid ${PC[curPlayer]}`,borderRadius:7,background:"transparent",color:PD[curPlayer],cursor:"pointer"}},"🎲 Random")
+          )
+        ),
+        React.createElement('div',{style:{display:"grid",gridTemplateColumns:"1fr 180px",gap:10}},
+          React.createElement('div',{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}},
+            effectiveBOT3.map(id=>{
+              const t=TEAMS.find(x=>x.id===id);
+              const owner=picks[id];const taken=owner!==undefined;
+              return React.createElement('button',{key:id,onClick:()=>!taken&&pickTeam(id),disabled:taken,style:{padding:"10px 6px",border:`${taken?"1.5px":"0.5px"} solid ${taken?PC[owner]:PC[2]}`,borderRadius:10,background:taken?PL[owner]:"#f5f5f5",display:"flex",flexDirection:"column",alignItems:"center",gap:3,cursor:taken?"default":"pointer",opacity:taken?0.7:1}},
+                React.createElement('span',{style:{fontSize:22}},t.flag),
+                React.createElement('span',{style:{fontSize:11,fontWeight:500}},t.name),
+                React.createElement('span',{style:{fontSize:9,color:"#666"}},`Groep ${teamGroup[id]}`),
+                taken&&React.createElement('span',{style:{fontSize:9,color:PC[owner],fontWeight:500}},renderName(owner,9))
+              );
+            })
+          ),
+          React.createElement(PlayerSidebar)
+        )
+          ) /* end bot3 isMyTurn */
+      ),
+
+      /* LOTING */
+      s.draftPhase==="loting" && (()=>{
+        const group=s.lotGroups[s.lotStep]||[];
+        return React.createElement(React.Fragment,null,
+          React.createElement('div',{style:{padding:"10px 14px",borderRadius:8,marginBottom:14,background:"#f5f5f5",border:"0.5px solid #ddd",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+            React.createElement('div',null,
+              React.createElement('p',{style:{fontSize:10,margin:0,color:"#333",fontWeight:500,textTransform:"uppercase",letterSpacing:0.5}},"🎲 Loting"),
+              React.createElement('p',{style:{fontSize:15,fontWeight:500,margin:"3px 0 0"}},"Groep ",s.lotStep+1," van ",s.lotGroups.length)
+            ),
+            React.createElement('div',{style:{display:"flex",gap:3}},
+              (s.lotGroups||[]).map((_,i)=>React.createElement('div',{key:i,style:{width:8,height:8,borderRadius:"50%",background:i<s.lotStep?"#ccc":i===s.lotStep?"#333":"#eee"}}))
+            )
+          ),
+          React.createElement('div',{style:{display:"grid",gridTemplateColumns:"1fr 180px",gap:12}},
+            React.createElement('div',null,
+              React.createElement('div',{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:12}},
+                group.map(({teamId,player})=>{
+                  const t=TEAMS.find(x=>x.id===teamId)||{flag:"?",name:"?"};
+                  return React.createElement('div',{key:teamId,style:{border:`1.5px solid ${s.lotRevealed?PC[player]:"#ddd"}`,borderRadius:12,padding:"12px 6px",display:"flex",flexDirection:"column",alignItems:"center",gap:4,background:s.lotRevealed?PL[player]:"#f5f5f5",textAlign:"center"}},
+                    React.createElement('span',{style:{fontSize:26}},t.flag),
+                    React.createElement('span',{style:{fontSize:12,fontWeight:500,lineHeight:1.2}},t.name),
+                    React.createElement('span',{style:{fontSize:9,color:"#666"}},`Groep ${teamGroup[teamId]}`),
+                    s.lotRevealed
+                      ?React.createElement('span',{style:{fontSize:11,fontWeight:600,color:PC[player],marginTop:2}},renderName(player,11))
+                      :React.createElement('span',{style:{fontSize:16,marginTop:2}},"❓")
+                  );
+                })
+              ),
+              !s.lotRevealed
+                ?React.createElement('button',{onClick:revealGroup,style:{width:"100%",padding:"12px",fontSize:14,fontWeight:500,background:"#f0f0f0",color:"#111",border:"none",borderRadius:8,cursor:"pointer"}},"🎲 Loot!")
+                :React.createElement('button',{onClick:nextGroup,style:{width:"100%",padding:"12px",fontSize:14,fontWeight:500,background:PC[0],color:"white",border:"none",borderRadius:8,cursor:"pointer"}},
+                    s.lotStep+1>=s.lotGroups.length?"Draft compleet!":"Volgende groep ->")
+            ),
+            React.createElement(PlayerSidebar)
+          )
+        );
+      })(),
+
+      /* DONE */
+      s.draftPhase==="potPred"&&(()=>{
+        const order=s.draftOrder||[0,1,2];
+        const step=s.potPredStep||0;
+        const playerIdx=order[step];
+        const isMyTurn=currentPlayer===playerIdx;
+        const submitPred=()=>{
+          if(!localPred.trim())return;
+          const newPreds=[...(s.playerPreds||["","",""])];
+          newPreds[playerIdx]=localPred.trim();
+          if(step>=2){wMany({playerPreds:newPreds,draftPhase:"done"});setLocalPred("");}
+          else{wMany({playerPreds:newPreds,potPredStep:step+1});setLocalPred("");}
+        };
+        return isMyTurn
+          ? React.createElement('div',{style:{textAlign:"center",padding:"16px 0"}},
+              React.createElement('p',{style:{fontSize:16,fontWeight:500,marginBottom:4}},"🌟 Speler van het Toernooi"),
+              React.createElement('p',{style:{fontSize:12,color:"#666",marginBottom:20}},"Vul geheim je voorspelling in. Anderen niet kijken!"),
+              React.createElement('div',{style:{maxWidth:320,margin:"0 auto"}},
+                React.createElement('div',{style:{padding:"14px 16px",border:`1.5px solid ${PC[playerIdx]}`,borderRadius:12,background:PL[playerIdx],marginBottom:16}},
+                  React.createElement('p',{style:{fontSize:14,fontWeight:500,color:PD[playerIdx],marginBottom:12}},renderName(playerIdx,14)," — jouw voorspelling:"),
+                  React.createElement('div',{style:{position:"relative",marginBottom:10}},
+                    React.createElement('input',{
+                      type:"text",value:potSearch,
+                      onChange:e=>{setPotSearch(e.target.value);setLocalPred(e.target.value);setShowSugg(true);if(playerList.length===0)fetchSquads();},
+                      onFocus:()=>{setShowSugg(true);if(playerList.length===0)fetchSquads();},
+                      onBlur:()=>setTimeout(()=>setShowSugg(false),150),
+                      placeholder:"Zoek speler (bijv. Mbappé)...",autoFocus:true,
+                      style:{width:"100%",fontSize:13,padding:"8px 12px",border:`0.5px solid ${PC[playerIdx]}`,borderRadius:8,boxSizing:"border-box"}
+                    }),
+                    showSugg&&potSearch.length>1&&(()=>{
+                      const matches=playerList.filter(p=>p.name.toLowerCase().includes(potSearch.toLowerCase())).slice(0,8);
+                      if(!matches.length)return null;
+                      return React.createElement('div',{style:{position:"absolute",top:"100%",left:0,right:0,background:"white",border:"0.5px solid #ddd",borderRadius:8,zIndex:100,boxShadow:"0 4px 12px rgba(0,0,0,0.12)",overflow:"hidden",marginTop:2}},
+                        matches.map((p,mi)=>React.createElement('div',{key:mi,
+                          onMouseDown:()=>{setPotSearch(p.name);setLocalPred(p.name);setShowSugg(false);},
+                          style:{padding:"8px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,borderTop:mi>0?"0.5px solid #f0f0f0":"none",fontSize:12}},
+                          React.createElement('span',null,p.flag),
+                          React.createElement('span',{style:{flex:1,fontWeight:500}},p.name),
+                          React.createElement('span',{style:{color:"#666",fontSize:10}},p.teamName)
+                        ))
+                      );
+                    })()
+                  ),
+                  React.createElement('button',{onClick:submitPred,style:{width:"100%",padding:"10px",fontSize:13,fontWeight:500,background:PC[playerIdx],color:"white",border:"none",borderRadius:8,cursor:"pointer"}},
+                    step<2?"Opslaan & volgende speler →":"Opslaan & afronden")
+                ),
+                React.createElement('p',{style:{fontSize:10,color:"#666"}},`${step+1} van 3 ingevuld`)
+              )
+            )
+          : React.createElement('div',{style:{textAlign:"center",padding:"32px 16px"}},
+              React.createElement('div',{style:{fontSize:32,marginBottom:12}},"🤫"),
+              React.createElement('p',{style:{fontSize:16,fontWeight:500,color:"#333",marginBottom:6}},"Wacht even..."),
+              React.createElement('p',{style:{fontSize:13,color:"#666"}},renderName(playerIdx,13)," vult zijn voorspelling in")
+            );
+      })(),
+
+      s.draftPhase==="done"&&React.createElement('div',null,
+        React.createElement('div',{style:{padding:"12px 14px",borderRadius:8,marginBottom:16,background:PL[1],border:`0.5px solid ${PC[1]}`,display:"flex",justifyContent:"space-between",alignItems:"center",color:PD[1]}},
+          React.createElement('span',{style:{fontWeight:500}},"Draft compleet! Alle 48 teams verdeeld."),
+          React.createElement('button',{onClick:()=>setPhase("results"),style:{fontSize:12,padding:"4px 10px",border:`0.5px solid ${PC[1]}`,borderRadius:7,background:"transparent",color:PD[1],cursor:"pointer"}},"Naar Uitslag →")
+        ),
+        React.createElement(PlayerSidebar)
+      )
+    ),
+
+    /* ── UITSLAG ── */
+    phase==="results" && React.createElement('div',null,
+      /* last updated indicator */
+      s.live?.lastUpdated&&React.createElement('div',{style:{display:"flex",alignItems:"center",gap:6,marginBottom:12,padding:"6px 12px",background:"#f8f8f8",borderRadius:8}},
+        React.createElement('span',{style:{fontSize:11,color:"#888"}},"🕐 Bijgewerkt op ",
+          new Date(s.live.lastUpdated).toLocaleDateString('nl-NL',{day:'numeric',month:'short',timeZone:'Europe/Amsterdam'}),
+          " om ",
+          new Date(s.live.lastUpdated).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Amsterdam'})
+        ),
+        apiStatus?.ok===false&&React.createElement('span',{style:{fontSize:10,color:PC[2],marginLeft:4}},"— update mislukt")
+      ),
+
+      /* rondes / wedstrijden tabs */
+      React.createElement('div',{style:{display:"flex",gap:5,marginBottom:12}},
+        ["groepen","wedstrijden","knockouts"].map(tab=>React.createElement('button',{key:tab,onClick:()=>setActiveRnd(tab),style:{flex:1,padding:"6px",fontSize:12,borderRadius:8,border:"0.5px solid #ddd",background:activeRnd===tab?"#f0f0f0":"transparent",cursor:"pointer",fontWeight:activeRnd===tab?500:400}},
+          tab==="groepen"?"Groepen":tab==="wedstrijden"?"Wedstrijden":"Knockouts"))
+      ),
+
+      /* GROEPEN TAB */
+      activeRnd==="groepen"&&(()=>{
+        const apiStandings=s.live?.groupStandings||{};
+        const hasApiData=Object.keys(apiStandings).length>0;
+        /* fall back to pre-tournament view from GROUPS constant */
+        const standings=hasApiData?apiStandings:
+          Object.fromEntries(Object.entries(GROUPS).map(([g,ids])=>[g,ids.map(id=>({id,p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0}))]));
+        /* compute best 8 third-place teams for highlighting */
+        const hasMatches=Object.values(standings).some(rows=>rows.some(r=>r.p>0));
+        const thirds=Object.values(standings)
+          .map(rows=>rows[2]).filter(Boolean)
+          .sort((a,b)=>b.pts!==a.pts?b.pts-a.pts:(b.gf-b.ga)!==(a.gf-a.ga)?(b.gf-b.ga)-(a.gf-a.ga):b.gf-a.gf);
+        const best8ids=new Set(thirds.slice(0,8).map(r=>r.id));
+        return React.createElement(React.Fragment,null,
+          React.createElement('div',{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:10}},
+          Object.entries(standings).sort().map(([grp,rows])=>{
+            return React.createElement('div',{key:grp,style:{border:"0.5px solid #ddd",borderRadius:10,overflow:"hidden"}},
+              React.createElement('div',{style:{padding:"5px 10px",background:"#f5f5f5",fontSize:11,fontWeight:500,color:"#333"}},"Groep "+grp),
+              React.createElement('table',{style:{width:"100%",borderCollapse:"collapse",fontSize:11}},
+                React.createElement('thead',null,React.createElement('tr',null,
+                  React.createElement('th',{style:{textAlign:"left",padding:"3px 8px",color:"#666",fontWeight:400}},"Team"),
+                  ["P","W","G","V","+/-","Pnt"].map(h=>React.createElement('th',{key:h,style:{textAlign:"center",padding:"3px 3px",color:"#666",fontWeight:400,width:20,whiteSpace:"nowrap"}},h))
+                )),
+                React.createElement('tbody',null,
+                  (rows||[]).map((row,i)=>{
+                    const t=TEAMS.find(x=>x.id===row.id)||{flag:"",name:row.id};
+                    const owner=picks[row.id];
+                    const gd=(row.gf||0)-(row.ga||0);
+                    const isThrough=i<2||(i===2&&best8ids.has(row.id));
+                    const isBest8=i===2&&best8ids.has(row.id);
+                    return React.createElement('tr',{key:i,style:{borderTop:"0.5px solid #f0f0f0",background:isThrough?"#fafff8":"white"}},
+                      React.createElement('td',{style:{padding:"4px 8px",whiteSpace:"nowrap"}},
+                        React.createElement('span',null,t.flag," "),
+                        React.createElement('span',{style:{fontWeight:i<2?600:400,fontSize:10,color:"#1a1a1a"}},t.name),
+                        owner!==undefined&&React.createElement('span',{style:{fontSize:9,color:PC[owner],fontWeight:500,marginLeft:3}},s.names[owner].split(" ")[0])
+                      ),
+                      [row.p,row.w,row.d,row.l,(gd>0?"+":"")+gd,row.pts].map((v,j)=>
+                        React.createElement('td',{key:j,style:{textAlign:"center",padding:"4px 3px",whiteSpace:"nowrap",fontWeight:j===5?500:400,color:j===5?PC[1]:"#333",fontSize:10}},v)
+                      )
+                    );
+                  })
+                )
+              )
+            );
+          })
+          ),
+          React.createElement('p',{style:{fontSize:10,color:"#555",marginTop:6}},"Groen = op dit moment door (top 2 per groep + 8 beste nrs. 3)")
+        );
+      })(),
+
+      /* WEDSTRIJDEN TAB */
+      activeRnd==="wedstrijden"&&(()=>{
+        const matches=(s.live?.matchList||[])
+          .filter(m=>m.status==="FINISHED"||m.status==="IN_PLAY")
+          .sort((a,b)=>new Date(b.date+"T"+(b.time||"00:00"))-new Date(a.date+"T"+(a.time||"00:00")));
+        const now=new Date();
+        /* toon wedstrijden op de huidige en volgende kalenderdag in NL-tijd */
+        const nlFormatter=new Intl.DateTimeFormat('nl-NL',{timeZone:'Europe/Amsterdam',year:'numeric',month:'2-digit',day:'2-digit'});
+        const todayNL=nlFormatter.format(now).split('-').reverse().join('-'); /* YYYY-MM-DD */
+        const tomorrowNL=nlFormatter.format(new Date(now.getTime()+24*60*60*1000)).split('-').reverse().join('-');
+        const toUtcMs=m=>{
+          const raw=m.time||"00:00";
+          const mch=raw.match(/(\d{1,2}):(\d{2})\s*UTC([+-]?\d+)?/);
+          if(mch){
+            const h=parseInt(mch[1]),mn=parseInt(mch[2]),off=parseInt(mch[3]||"0");
+            return Date.UTC(parseInt(m.date.slice(0,4)),parseInt(m.date.slice(5,7))-1,parseInt(m.date.slice(8,10)),h-off,mn,0);
+          }
+          return new Date(`${m.date}T${raw.slice(0,5)}:00Z`).getTime();
+        };
+        const upcoming=(s.live?.matchList||[]).filter(m=>{
+          if(m.status!=="SCHEDULED")return false;
+          if(!m.date)return false;
+          try{
+            /* bepaal NL-kalenderdag van de wedstrijd */
+            const matchNL=nlFormatter.format(new Date(toUtcMs(m))).split('-').reverse().join('-');
+            return matchNL===todayNL||matchNL===tomorrowNL;
+          }
+          catch(_){return false;}
+        }).sort((a,b)=>toUtcMs(a)-toUtcMs(b));
+        if(matches.length===0&&upcoming.length===0)return React.createElement('div',{style:{textAlign:"center",padding:"24px",color:"#555",fontSize:12}},
+          React.createElement('p',null,"Nog geen gespeelde wedstrijden."),
+          React.createElement('p',{style:{fontSize:10,marginTop:6}},"Toernooi start 11 juni 2026"));
+        return React.createElement('div',null,
+          matches.length>0&&React.createElement('div',null,
+            matches.map((m,i)=>{
+              const ht=TEAMS.find(x=>x.id===m.home)||{flag:"",name:m.homeName};
+              const at=TEAMS.find(x=>x.id===m.away)||{flag:"",name:m.awayName};
+              const ho=picks[m.home];const ao=picks[m.away];
+              return React.createElement('div',{key:m.id||i,style:{border:"0.5px solid #ddd",borderRadius:10,marginBottom:8,overflow:"hidden"}},
+                /* header */
+                React.createElement('div',{style:{padding:"5px 10px",background:"#f8f8f8",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+                  React.createElement('span',{style:{fontSize:10,color:"#555"}},(m.group?"Groep "+m.group+" · ":"")+m.stage+(m.venue?" · "+m.venue:"")),
+                  React.createElement('span',{style:{fontSize:10,color:"#666"}},(m.date?m.date.slice(8)+"/"+m.date.slice(5,7):"" )+(m.status==="IN_PLAY"?" 🔴 LIVE":""))
+                ),
+                /* score */
+                React.createElement('div',{style:{padding:"8px 12px",display:"grid",gridTemplateColumns:"1fr auto 1fr",alignItems:"center",gap:8}},
+                  React.createElement('div',{style:{textAlign:"right"}},
+                    React.createElement('span',{style:{fontSize:13,fontWeight:500,color:"#1a1a1a"}},ht.flag," ",ht.name),
+                    ho!==undefined&&React.createElement('span',{style:{fontSize:9,color:PC[ho],marginLeft:4,display:"block"}},s.names[ho].split(" ")[0])
+                  ),
+                  React.createElement('div',{style:{textAlign:"center",fontSize:18,fontWeight:500,minWidth:50}},
+                    m.hs!==null?`${m.hs} - ${m.as}`:"vs"
+                  ),
+                  React.createElement('div',{style:{textAlign:"left"}},
+                    React.createElement('span',{style:{fontSize:13,fontWeight:500,color:"#1a1a1a"}},at.flag," ",at.name),
+                    ao!==undefined&&React.createElement('span',{style:{fontSize:9,color:PC[ao],marginLeft:4,display:"block"}},s.names[ao].split(" ")[0])
+                  )
+                ),
+                /* goals */
+                (m.goals||[]).length>0&&React.createElement('div',{style:{padding:"3px 12px 5px",borderTop:"0.5px solid #f0f0f0"}},
+                  (m.goals||[]).map((g,gi)=>{
+                    const isHome=g.teamId===m.home;
+                    return React.createElement('div',{key:gi,style:{fontSize:10,color:"#333",textAlign:isHome?"left":"right",padding:"1px 0"}},
+                      isHome?`⚽ ${g.min}' ${g.scorer}`:`${g.scorer} ${g.min}' ⚽`
+                    );
+                  })
+                ),
+                /* cards */
+                (m.cards||[]).length>0&&React.createElement('div',{style:{padding:"2px 12px 5px",borderTop:"0.5px solid #f0f0f0",display:"flex",flexWrap:"wrap",gap:4}},
+                  (m.cards||[]).map((c,ci)=>React.createElement('span',{key:ci,style:{fontSize:10,color:"#666"}},
+                    c.type==="R"?"🟥":"🟨"," ",c.min,"' ",c.player
+                  ))
+                )
+              );
+            })
+          ),
+          upcoming.length>0&&React.createElement('div',{style:{marginTop:12}},
+            React.createElement('p',{style:{fontSize:11,color:"#666",marginBottom:8,fontWeight:500}},"Aankomende wedstrijden (komende 2 dagen)"),
+            upcoming.map((m,i)=>{
+              const ht=TEAMS.find(x=>x.id===m.home)||{flag:"",name:m.homeName,id:m.home};
+              const at=TEAMS.find(x=>x.id===m.away)||{flag:"",name:m.awayName,id:m.away};
+              const hOwner=picks[ht.id]!==undefined?picks[ht.id]:null;
+              const aOwner=picks[at.id]!==undefined?picks[at.id]:null;
+              /* convert to Dutch time — openfootball uses "HH:MM UTC±N" format */
+              let timeStr=m.time||"";
+              if(m.date&&m.time){
+                try{
+                  const raw=m.time||"";
+                  const mch=raw.match(/(\d{1,2}):(\d{2})\s*UTC([+-]?\d+)?/);
+                  if(mch){
+                    const h=parseInt(mch[1]),mn=parseInt(mch[2]),off=parseInt(mch[3]||"0");
+                    const utcMs=Date.UTC(
+                      parseInt(m.date.slice(0,4)),parseInt(m.date.slice(5,7))-1,parseInt(m.date.slice(8,10)),
+                      h-off,mn,0);
+                    timeStr=new Date(utcMs).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Amsterdam'});
+                  }
+                }catch(_){}
+              }
+              return React.createElement('div',{key:i,style:{display:"flex",alignItems:"center",gap:6,padding:"8px 12px",borderRadius:8,border:"0.5px solid #ddd",marginBottom:6,background:"#fafafa"}},
+                /* home team */
+                React.createElement('div',{style:{flex:1,display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2}},
+                  React.createElement('span',{style:{fontSize:12,fontWeight:500,color:"#1a1a1a"}},ht.flag," ",ht.name),
+                  hOwner!==null&&React.createElement('span',{style:{fontSize:10,color:PC[hOwner],fontWeight:500}},renderName(hOwner,10))
+                ),
+                /* time + venue */
+                React.createElement('div',{style:{textAlign:"center",flexShrink:0,minWidth:80}},
+                  React.createElement('div',{style:{fontSize:12,fontWeight:600,color:"#333"}},timeStr),
+                  React.createElement('div',{style:{fontSize:9,color:"#999",marginTop:1}},m.date?.slice(8)+"/"+m.date?.slice(5,7)),
+                  m.venue&&React.createElement('div',{style:{fontSize:9,color:"#aaa",marginTop:1}},m.venue.split(",")[0])
+                ),
+                /* away team */
+                React.createElement('div',{style:{flex:1,display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2}},
+                  React.createElement('span',{style:{fontSize:12,fontWeight:500,color:"#1a1a1a"}},at.name," ",at.flag),
+                  aOwner!==null&&React.createElement('span',{style:{fontSize:10,color:PC[aOwner],fontWeight:500}},renderName(aOwner,10))
+                )
+              );
+            })
+          )
+        );
+      })(),
+
+      /* KNOCKOUTS TAB */
+      activeRnd==="knockouts"&&(()=>{
+        const teamCard=(id,label)=>{
+          const t=id?TEAMS.find(x=>x.id===id):null;
+          const owner=id&&picks[id]!==undefined?picks[id]:null;
+          return React.createElement('div',{style:{flex:1,padding:"6px 8px",border:`0.5px solid ${t&&owner!==null?PC[owner]:"#ddd"}`,borderRadius:8,background:t&&owner!==null?PL[owner]:"#f8f8f8",minWidth:0,textAlign:"center"}},
+            t?React.createElement(React.Fragment,null,
+              React.createElement('div',{style:{fontSize:16,marginBottom:1}},t.flag),
+              React.createElement('div',{style:{fontSize:10,fontWeight:500,lineHeight:1.2,color:owner!==null?PD[owner]:"#333"}},t.name),
+              owner!==null&&React.createElement('div',{style:{fontSize:9,color:PC[owner],marginTop:1}},s.names[owner].split(" ")[0])
+            ):React.createElement(React.Fragment,null,
+              React.createElement('div',{style:{fontSize:14,color:"#999",marginBottom:2}},"?"),
+              React.createElement('div',{style:{fontSize:9,color:"#555"}},label||"TBD")
+            )
+          );
+        };
+        /* resolve bracket code to team id using group standings */
+        const resolveCode=(code,standings)=>{
+          if(!code||code.length<2)return null;
+          const pos=parseInt(code[0]);
+          if(pos===1||pos===2){
+            const grp=code[1];
+            const rows=standings[grp];
+            if(rows&&rows.length>=pos)return rows[pos-1].id;
+            return null;
+          }
+          return null; /* 3rd place: resolved by API match data */
+        };
+
+        const standings=s.live?.groupStandings||{};
+        const groupsDone=Object.keys(standings).length>=12&&Object.values(standings).every(rows=>rows.some(r=>r.p>0));
+
+        const rounds=[
+          {key:"r32",label:"Ronde van 32",teams:res.r32||[],advancers:res.r16||[],slots:32,sl:i=>`R32 #${i+1}`,bracket:BRACKET_R32},
+          {key:"r16",label:"Achtste finale",teams:res.r16||[],advancers:res.qf||[],slots:16,sl:i=>`R16 #${i+1}`,bracket:null},
+          {key:"qf",label:"Kwartfinale",teams:res.qf||[],advancers:res.sf||[],slots:8,sl:i=>`QF #${i+1}`,bracket:null},
+          {key:"sf",label:"Halve finale",teams:res.sf||[],advancers:res.final||[],slots:4,sl:i=>`SF #${i+1}`,bracket:null},
+          {key:"final",label:"Finale",teams:res.final||[],advancers:res.champion?[res.champion]:[],slots:2,sl:i=>`Finalist ${i+1}`,bracket:null},
+        ];
+        return React.createElement('div',null,
+          res.champion&&React.createElement('div',{style:{textAlign:"center",padding:"12px",marginBottom:16,background:PL[1],border:`0.5px solid ${PC[1]}`,borderRadius:12}},(()=>{
+            const t=TEAMS.find(x=>x.id===res.champion);const o=picks[res.champion];
+            return React.createElement(React.Fragment,null,
+              React.createElement('div',{style:{fontSize:11,color:PD[1],fontWeight:500,marginBottom:4}},"Wereldkampioen"),
+              React.createElement('div',{style:{fontSize:28}},t?.flag),
+              React.createElement('div',{style:{fontSize:14,fontWeight:500,color:PD[1]}},t?.name),
+              o!==undefined&&React.createElement('div',{style:{fontSize:11,color:PC[o]}},s.names[o].split(" ")[0])
+            );
+          })()),
+          rounds.map(({key,label,teams,advancers,slots,sl,bracket,sched})=>{
+            const useBracket=key==="r32"&&teams.length===0&&bracket;
+            const pairs=[];
+            if(useBracket){
+              bracket.forEach(([cA,cB])=>{
+                pairs.push([resolveCode(cA,standings),resolveCode(cB,standings),cA,cB]);
+              });
+            }else{
+              for(let i=0;i<slots;i+=2)pairs.push([teams[i]||null,teams[i+1]||null,sl(i),sl(i+1)]);
+            }
+            return React.createElement('div',{key,style:{marginBottom:16}},
+              React.createElement('div',{style:{fontSize:11,fontWeight:500,color:"#555",marginBottom:8,padding:"4px 8px",background:"#f5f5f5",borderRadius:6}},
+                label,React.createElement('span',{style:{fontWeight:400,color:"#666",marginLeft:6}},
+                  useBracket?"officieel schema — teams volgen na groepsfase":teams.length>0?teams.length+"/"+slots+" bekend":"schema — teams volgen na vorige ronde")),
+              React.createElement('div',{style:{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:6}},
+                pairs.map(([a,b,al,bl],i)=>{
+                  const allMatches=s.live?.matchList||[];
+                  const matchData=allMatches.find(m=>
+                    m.status==="FINISHED"&&((m.home===a&&m.away===b)||(m.home===b&&m.away===a))
+                  );
+                  const aAdv=a&&advancers.includes(a);const bAdv=b&&advancers.includes(b);
+                  const mkSlot=(id,lbl,adv)=>{
+                    const t=id?TEAMS.find(x=>x.id===id):null;
+                    const owner=id&&picks[id]!==undefined?picks[id]:null;
+                    const bc=adv?PC[owner??0]:(t&&owner!==null?PC[owner]:"#ddd");
+                    const bg=adv?(owner!==null?PL[owner]:"#f0fff0"):(t&&owner!==null?PL[owner]:"#f8f8f8");
+                    return React.createElement('div',{style:{flex:1,padding:"5px 6px",border:`${adv?"1.5px":"0.5px"} solid ${bc}`,borderRadius:8,background:bg,textAlign:"center",border:`0.5px solid ${bc}`,opacity:advancers.length>0&&!adv&&id?0.45:1}},
+                      t?React.createElement(React.Fragment,null,
+                        React.createElement('div',{style:{fontSize:15,marginBottom:1}},t.flag),
+                        React.createElement('div',{style:{fontSize:10,fontWeight:adv?500:400,lineHeight:1.2}},t.name),
+                        owner!==null&&React.createElement('div',{style:{fontSize:9,color:PC[owner],marginTop:1}},s.names[owner].split(" ")[0])
+                      ):React.createElement(React.Fragment,null,
+                        React.createElement('div',{style:{fontSize:11,color:"#666",fontWeight:500,marginBottom:1,fontFamily:"monospace"}},lbl),
+                        React.createElement('div',{style:{fontSize:9,color:"#888"}},"nog onbekend")
+                      )
+                    );
+                  };
+                  const schedInfo=sched?sched[i]:null;
+                  return React.createElement('div',{key:i,style:{marginBottom:2}},
+                    schedInfo&&React.createElement('div',{style:{fontSize:9,color:"#666",marginBottom:2,display:"flex",gap:4}},
+                      React.createElement('span',null,"📅 ",schedInfo.date),
+                      React.createElement('span',null,"⏰ ",schedInfo.time," CEST"),
+                      React.createElement('span',{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},schedInfo.venue)
+                    ),
+                    React.createElement('div',{style:{display:"flex",alignItems:"center",gap:5}},
+                      mkSlot(a,al,aAdv),
+                      React.createElement('div',{style:{fontSize:11,color:"#666",flexShrink:0,minWidth:28,textAlign:"center",fontWeight:500}},
+                        matchData&&matchData.hs!==null?(matchData.home===a?`${matchData.hs}-${matchData.as}`:`${matchData.as}-${matchData.hs}`):"vs"
+                      ),
+                      mkSlot(b,bl,bAdv)
+                    )
+                  );
+                })
+              )
+            );
+          })
+        );
+      })()
+    ),
+    phase==="standings" && (()=>{
+      const live=s.live||{};
+      const rondePts=upToKey=>{
+        const idx=ROUNDS.findIndex(r=>r.key===upToKey);
+        const m={};
+        TEAMS.forEach(t=>{let p=0;ROUNDS.slice(0,idx+1).forEach(r=>{const inR=r.key==="champion"?res.champion===t.id:(res[r.key]||[]).includes(t.id);if(inR)p+=sc[r.key];});m[t.id]=p;});
+        const base=[0,1,2].map(i=>pTeams[i].reduce((sum,t)=>sum+(m[t.id]||0),0));
+        if(worstTeamInfo){base[worstTeamInfo.player]+=sc.worst;}
+        if(res.topScorer&&picks[res.topScorer]!==undefined){base[picks[res.topScorer]]+=sc.topScorer||5;}
+        if(res.mostCards&&picks[res.mostCards]!==undefined){base[picks[res.mostCards]]+=(sc.mostCards||-5);}
+        return base;
+      };
+      const completedRounds=ROUNDS.filter(r=>r.key==="champion"?res.champion!==null:(res[r.key]||[]).length>0);
+      return React.createElement('div',null,
+
+        /* live trackers */
+        /* tussenstanden */
+        completedRounds.length>0&&React.createElement('div',{style:{marginBottom:16}},
+          React.createElement('p',{style:{fontSize:11,fontWeight:500,color:"#666",marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}},"Tussenstanden per ronde"),
+          React.createElement('div',{style:{overflowX:"auto"}},
+            React.createElement('table',{style:{width:"100%",borderCollapse:"collapse",fontSize:12}},
+              React.createElement('thead',null,React.createElement('tr',null,
+                React.createElement('th',{style:{textAlign:"left",padding:"4px 8px",color:"#555",fontWeight:400,fontSize:11,borderBottom:"0.5px solid #e0e0e0"}},"Speler"),
+                completedRounds.map(r=>React.createElement('th',{key:r.key,style:{textAlign:"center",padding:"4px 6px",color:"#555",fontWeight:400,fontSize:11,borderBottom:"0.5px solid #e0e0e0",whiteSpace:"nowrap"}},r.short))
+              )),
+              React.createElement('tbody',null,
+                [0,1,2].map(i=>React.createElement('tr',{key:i},
+                  React.createElement('td',{style:{padding:"5px 8px"}},
+                    React.createElement('div',{style:{display:"flex",alignItems:"center",gap:6}},
+                      React.createElement('div',{style:{width:8,height:8,borderRadius:"50%",background:PC[i],flexShrink:0}}),
+                      renderName(i,11)
+                    )
+                  ),
+                  completedRounds.map(r=>{const sc2=rondePts(r.key);const isLead=[...sc2].sort((a,b)=>b-a).indexOf(sc2[i])===0;return React.createElement('td',{key:r.key,style:{textAlign:"center",padding:"5px 6px",fontWeight:isLead?500:400,color:isLead?PC[i]:"#333",borderLeft:"0.5px solid #f0f0f0"}},sc2[i],isLead&&sc2[i]>0&&React.createElement('span',{style:{fontSize:9,marginLeft:2}},"↑"));})
+                ))
+              )
+            )
+          )
+        ),
+
+        /* hoofdranking */
+        ranking.map((pl,rank)=>React.createElement('div',{key:pl.i,style:cardStyle},
+          React.createElement('div',{style:{padding:"10px 14px",background:rank===0?PL[pl.i]:"#f8f8f8",display:"flex",alignItems:"center",justifyContent:"space-between"}},
+            React.createElement('div',{style:{display:"flex",alignItems:"center",gap:10,minWidth:0,flex:1}},
+              React.createElement('div',{style:{width:28,height:28,borderRadius:"50%",background:PC[pl.i],color:"white",fontSize:13,fontWeight:500,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},rank+1),
+              React.createElement('div',{style:{minWidth:0}},
+                React.createElement('div',null,React.createElement('span',{style:{fontSize:15}},renderName(pl.i,15))),
+                React.createElement('div',{style:{fontSize:10,color:rank===0?PC[pl.i]:"#555",marginTop:1,fontWeight:500}},["🥇 Shirt winnend land","🥈 Activiteit + tourguide","🥉 Weekend organiseren"][rank])
+              )
+            ),
+            React.createElement('span',{style:{fontSize:22,fontWeight:500,color:PC[pl.i]}},pl.score," pts")
+          ),
+          React.createElement('div',{style:{height:3,background:"#eee"}},React.createElement('div',{style:{height:"100%",width:`${Math.max(0,pl.score)/maxSc*100}%`,background:PC[pl.i]}})),
+          React.createElement('div',{style:{padding:"8px 10px",display:"flex",flexWrap:"wrap",gap:4}},
+            pTeams[pl.i].map(t=>{
+              const p=tPts[t.id]||0;const isOut=(res.r32||[]).length>0&&!(res.r32||[]).includes(t.id);
+              const isWorst=worstTeamInfo?.id===t.id;
+              const icons=(res.champion===t.id?"🏆":"")+(res.topScorer===t.id?"⚽":"")+(res.mostCards===t.id?"🟨":"")+(isWorst?"💀":"");
+              const bonusPts=(res.topScorer===t.id?(sc.topScorer||5):0)+(res.mostCards===t.id?(sc.mostCards||-5):0)+(isWorst?sc.worst:0);
+              return React.createElement('div',{key:t.id,style:{padding:"3px 7px",fontSize:11,borderRadius:7,background:isWorst?"#FEE2E2":"#f5f5f5",border:`0.5px solid ${isWorst?PC[2]:p>0?PC[pl.i]:"#ddd"}`,display:"flex",alignItems:"center",gap:4,opacity:isOut&&!isWorst?0.45:1}},
+                React.createElement('span',null,t.flag),React.createElement('span',null,t.name),
+                p!==0&&React.createElement('span',{style:{fontWeight:500,color:p>0?PC[pl.i]:PC[2]}},p>0?"+":"",p),
+                bonusPts!==0&&React.createElement('span',{style:{fontWeight:500,color:bonusPts>0?"#1D9E75":PC[2],fontSize:10}},bonusPts>0?"(+":"(",bonusPts>0?bonusPts:-bonusPts,bonusPts>0?" bonus":" straf",")"),
+                icons&&React.createElement('span',null,icons)
+              );
+            }),
+            pTeams[pl.i].length===0&&React.createElement('span',{style:{fontSize:11,color:"#555"}},"Nog geen teams — draft eerst")
+          )
+        )),
+
+        /* aparte prijzen */
+        React.createElement('div',{style:{marginTop:8,marginBottom:12}},
+          React.createElement('p',{style:{fontSize:11,color:"#666",fontWeight:500,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}},"🎁 Aparte prijzen"),
+
+          /* topscoorder + meeste kaarten */
+          [{key:"topScorer",icon:"⚽",label:"Topscoorder",sub:"Winnaar kiest 2 drankjes p.p. (+6 pts bonus)",color:PC[1],dark:PD[1],lite:PL[1]},{key:"mostCards",icon:"🟨🟥",label:"Meeste kaarten",sub:"Verliezer doet butler-service 1 avond (-6 pts straf)",color:PC[2],dark:PD[2],lite:PL[2]}].map(({key,icon,label,sub,color,dark,lite})=>{
+            const liveTeamId=key==="topScorer"?live.topScorerTeamId:live.mostCardsTeamId;
+            const liveTeam=liveTeamId?TEAMS.find(t=>t.id===liveTeamId):null;
+            const liveOwner=liveTeamId&&picks[liveTeamId]!==undefined?picks[liveTeamId]:null;
+            const liveCount=key==="topScorer"?live.topScorerGoals:live.mostCardsCount;
+            const liveDetail=key==="topScorer"?`${live.topScorerName||""} — ${liveCount} goals`:`${liveCount} kaarten`;
+            const hasLive=liveCount>0;
+            return React.createElement('div',{key,style:{...cardStyle,marginBottom:8}},
+              React.createElement('div',{style:{padding:"10px 14px",background:hasLive?lite:"#f8f8f8",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}},
+                React.createElement('div',{style:{display:"flex",alignItems:"center",gap:10,minWidth:0,flex:1}},
+                  React.createElement('span',{style:{fontSize:20,width:28,display:"flex",alignItems:"center"}},key==="mostCards"?React.createElement(CardsIcon,{size:20}):icon),
+                  React.createElement('div',null,
+                    React.createElement('p',{style:{fontSize:13,fontWeight:500,margin:0,color:hasLive?dark:"#333"}},label),
+                    React.createElement('p',{style:{fontSize:11,color:"#555",margin:"2px 0 0"}},sub)
+                  )
+                ),
+                React.createElement('div',{style:{textAlign:"right",flexShrink:0,maxWidth:200}},
+                  hasLive?React.createElement(React.Fragment,null,
+                    React.createElement('div',{style:{display:"flex",alignItems:"center",gap:4,justifyContent:"flex-end",marginBottom:2}},
+                      React.createElement('span',{style:{fontSize:9,background:key==="topScorer"?"#e8f5e9":"#fee2e2",color:key==="topScorer"?"#2e7d32":"#991b1b",padding:"1px 5px",borderRadius:4,fontWeight:500}},"🔴 actuele stand"),
+                      liveTeam&&React.createElement('span',{style:{fontSize:11,fontWeight:500,color:dark}},liveTeam.flag," ",liveTeam.name)
+                    ),
+                    React.createElement('p',{style:{fontSize:10,color:"#666",margin:"0 0 3px",lineHeight:1.4}},liveDetail),
+                    liveOwner!==null
+                      ?React.createElement('p',{style:{fontSize:11,color:PC[liveOwner],fontWeight:500,margin:0}},"→ ",renderName(liveOwner,11))
+                      :React.createElement('p',{style:{fontSize:10,color:"#555",fontStyle:"italic",margin:0}},"niet gedraft")
+                  ):React.createElement('p',{style:{fontSize:11,color:"#555",fontStyle:"italic",margin:0,color:"#888"}},"nog niet bepaald")
+                )
+              )
+            );
+          }),
+
+          /* slechtste team — altijd zichtbaar */
+          React.createElement('div',{style:{...cardStyle,marginBottom:8}},
+            React.createElement('div',{style:{padding:"10px 14px",background:worstTeamInfo?"#FEF2F2":"#f8f8f8",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}},
+              React.createElement('div',{style:{display:"flex",alignItems:"center",gap:10}},
+                React.createElement('span',{style:{fontSize:20}},"💀"),
+                React.createElement('div',null,
+                  React.createElement('p',{style:{fontSize:13,fontWeight:500,margin:0,color:worstTeamInfo?"#7F1D1D":"#333"}},"Slechtste team"),
+                  React.createElement('p',{style:{fontSize:11,color:"#555",margin:"2px 0 0"}},sc.worst," punten straf")
+                )
+              ),
+              React.createElement('div',{style:{textAlign:"right",maxWidth:200}},
+                worstTeamInfo?React.createElement(React.Fragment,null,
+                  React.createElement('div',{style:{display:"flex",alignItems:"center",gap:4,justifyContent:"flex-end",marginBottom:2}},
+                    React.createElement('span',{style:{fontSize:9,background:"#fee2e2",color:"#991b1b",padding:"1px 5px",borderRadius:4,fontWeight:500}},"🔴 actuele stand"),
+                    React.createElement('span',{style:{fontSize:11,fontWeight:500,color:"#7F1D1D"}},worstTeamInfo.flag," ",worstTeamInfo.name)
+                  ),
+                  React.createElement('p',{style:{fontSize:10,color:"#666",margin:"0 0 3px",lineHeight:1.4}},worstTeamInfo.pts," pts · doelsaldo ",worstTeamInfo.gd," · ",worstTeamInfo.cards," kaarten"),
+                  React.createElement('p',{style:{fontSize:11,color:PC[worstTeamInfo.player],fontWeight:500,margin:0}},"→ ",renderName(worstTeamInfo.player,11))
+                ):React.createElement('p',{style:{fontSize:11,color:"#555",fontStyle:"italic",margin:0,color:"#888"}},"nog niet bepaald")
+              )
+            )
+          ),
+
+          /* speler van toernooi */
+          React.createElement('div',{style:{...cardStyle,marginBottom:8}},
+            React.createElement('div',{style:{padding:"10px 14px",background:s.photoVictim!=null?PL[s.photoVictim]:"#f8f8f8",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}},
+              React.createElement('div',{style:{display:"flex",alignItems:"center",gap:10}},
+                React.createElement('span',{style:{fontSize:20}},"🌟"),
+                React.createElement('div',null,
+                  React.createElement('p',{style:{fontSize:13,fontWeight:500,margin:0,color:"#1a1a1a"}},"Speler van het Toernooi"),
+                  React.createElement('p',{style:{fontSize:11,color:"#555",margin:"2px 0 0"}},"Eigenaar kiest wie jaar lang foto speler in huis hangt")
+                )
+              ),
+              React.createElement('div',{style:{textAlign:"right",minWidth:160}},
+                s.potPlayer?.trim()
+                  ? React.createElement(React.Fragment,null,
+                      React.createElement('p',{style:{fontSize:13,margin:0,fontWeight:600,color:"#1a1a1a"}},s.potPlayer),
+                      (()=>{
+                        const preds=s.playerPreds||["","",""];
+                        const champKnown=!!res.champion;
+                        const winners=[0,1,2].filter(i=>preds[i]&&preds[i].trim().toLowerCase()===s.potPlayer.trim().toLowerCase());
+                        const losers=[0,1,2].filter(i=>!winners.includes(i));
+                        if(!champKnown)return React.createElement('p',{style:{fontSize:10,color:"#888",margin:"3px 0 0",fontStyle:"italic"}},"Onthuld na de finale");
+                        if(winners.length===0)return React.createElement('p',{style:{fontSize:11,margin:"3px 0 0",color:"#888"}},"Niemand had het goed");
+                        /* auto-set photoVictim if not yet set */
+                        if(winners.length===2&&losers.length===1&&s.photoVictim==null){w('photoVictim',losers[0]);}
+                        if(winners.length===3&&s.photoVictim==null){w('photoVictim',-1);} /* all 3 */
+                        const victims=s.photoVictim===-1?[0,1,2]:s.photoVictim!=null?[s.photoVictim]:losers.length===1?losers:null;
+                        return React.createElement(React.Fragment,null,
+                          winners.map(wi=>React.createElement('p',{key:wi,style:{fontSize:11,margin:"2px 0 0",color:PC[wi],fontWeight:500}},"✓ ",renderName(wi,11)," had het goed!")),
+                          winners.length===1&&s.photoVictim==null&&React.createElement('div',{style:{marginTop:6}},
+                            React.createElement('p',{style:{fontSize:10,color:"#666",marginBottom:4}},"Kies wie de foto ophangt:"),
+                            React.createElement('div',{style:{display:"flex",gap:4}},
+                              losers.map(j=>React.createElement('button',{key:j,onClick:()=>w('photoVictim',j),style:{padding:"4px 8px",fontSize:11,border:`0.5px solid ${PC[j]}`,borderRadius:6,background:PL[j],color:PD[j],cursor:"pointer",fontWeight:500}},renderName(j,11)))
+                            )
+                          ),
+                          victims&&React.createElement('p',{style:{fontSize:11,margin:"4px 0 0",color:"#555",fontWeight:500}},
+                            "🖼️ ",victims.map((v,vi)=>React.createElement('span',{key:v,style:{color:PC[v],fontWeight:600}},vi>0?" & ":null,renderName(v,11)))," hangt foto op"
+                          )
+                        );
+                      })()
+                    )
+                  : React.createElement('p',{style:{fontSize:11,fontStyle:"italic",margin:0,color:"#888"}},"nog niet bepaald")
+              )
+            )
+          )
+        ),
+
+        /* puntensysteem */
+        React.createElement('div',{style:{padding:"10px 14px",background:"#f5f5f5",border:"0.5px solid #ddd",borderRadius:8,fontSize:11,color:"#666"}},
+          React.createElement('p',{style:{fontWeight:500,marginBottom:6,color:"#888",fontSize:12}},"Puntensysteem"),
+          [["Door groepsfase",sc.r32],["R32 gewonnen",sc.r16],["Achtste finale gewonnen",sc.qf],["Kwartfinale gewonnen",sc.sf],["Halve finale gewonnen",sc.final],["Kampioen",sc.champion],["Slechtste team (straf)",sc.worst],["Topscoorder bonus",sc.topScorer||6],["Meeste kaarten (straf)",sc.mostCards||-6]].map(([l,p])=>
+            React.createElement('div',{key:l,style:{display:"flex",justifyContent:"space-between",marginBottom:3}},
+              React.createElement('span',{style:{color:p<0?PC[2]:"inherit"}},l),
+              React.createElement('span',{style:{fontWeight:500,color:p<0?PC[2]:PC[1]}},p>0?"+":"",p)
+            )
+          )
+        )
+      );
+    })()
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(App));
+</script>
+</body>
+</html>
